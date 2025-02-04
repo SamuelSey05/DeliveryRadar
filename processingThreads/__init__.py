@@ -1,1 +1,1 @@
-import object
+from object import ProcessingThread
