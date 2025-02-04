@@ -2,6 +2,9 @@ import os
 from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
+import time
+import datetime
+import numpy as np
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
 
@@ -33,6 +36,6 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
             bike_data.append((frame_number, x, y, w, h))
 
 
-    os.remove(f"processed_videos/processed_{id}.mp4")
+    os.remove(path)
     os.remove(vid)
     pass
