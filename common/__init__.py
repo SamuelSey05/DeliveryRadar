@@ -1,1 +1,1 @@
-import vehicle_type
+from vehicle_type import *
