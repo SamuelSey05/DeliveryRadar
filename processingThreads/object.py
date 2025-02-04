@@ -2,7 +2,7 @@ from videoProcessing import processVideo
 
 import os.path
 
-from common.vehicle_type import VehicleType
+from common import VehicleType
 
 class ProcessingThread:
     
