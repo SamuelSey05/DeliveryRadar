@@ -1,6 +1,13 @@
 import os
 from common.vehicle_type import VehicleType
-import moviepy as mp
+import cv2
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
+    video = cv2.VideoCapture(vid)
+    video.write_videofile(f"processed_videos/processed_{id}.mp4")
+
+    # TODO: Process video
+
+    os.remove(f"processed_videos/processed_{id}.mp4")
+    os.remove(vid)
     pass
