@@ -1,3 +1,0 @@
-Need to produce a zip file, plus a JSON object "incident.json" containing video metadata. Give an os.path for this.
-
-Heatmap will accept tuples of (W3W coords, type, speed)
