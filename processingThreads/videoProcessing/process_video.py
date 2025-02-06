@@ -46,6 +46,7 @@ def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
     midpoints = np.zeros((len(frames), 2))  # 2D array for x,y coordinates
     weights = np.zeros(len(frames))  # One less weight than frames, to match diffs
     prev_j = frames[0][0] - 1
+    
     for i, (j, x, y, w, h) in enumerate(frames):
         midpoints[i] = [x + w/2, y + h/2]
         weights[i] = 1/(j - prev_j) # Weight is inversely proportional to the amount of time between frames
