@@ -15,6 +15,7 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     BIKE_ID = 1
 
     video = cv2.VideoCapture(vid)
+    fps = video.get(cv2.CAP_PROP_FPS)
     video.write_videofile(f"processed_videos/processed_{id}.mp4")
 
     path = f"processed_videos/processed_{id}.mp4"
