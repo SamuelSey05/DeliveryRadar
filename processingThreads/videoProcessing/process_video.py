@@ -21,11 +21,15 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     pass
 
 def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
-    midpoints = np.zeros(len(frames))
-    for i, (x, y, w, h) in enumerate(frames):
-        midpoints[i] = (x + w/2, y + h/2) # Get midpoint of rectangle in frame
+    midpoints = np.zeros((len(frames), 2))  # 2D array for x,y coordinates
+    weights = np.zeros(len(frames))  # One less weight than frames, to match diffs
+    prev_j = frames[0][0] - 1
+    for i, (j, x, y, w, h) in enumerate(frames):
+        midpoints[i] = [x + w/2, y + h/2]
+        weights[i] = 1/(j - prev_j) # Weight is inversely proportional to the amount of time between frames
+        prev_j = j
 
-    diffs = midpoints[1:] - midpoints[:-1] # Calculate differences between consecutive midpoints
-    pixels_per_second = diffs * fps # Convert to pixels per second
+    diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
+    pixels_per_second = diffs * fps * weights[1:] # Convert to pixels per second using weights to account for frames without rectangles
 
-    return pixels_per_second / len(frames) # Return average speed in pixels per second
+    return np.average(pixels_per_second) # Return average speed in pixels per second
