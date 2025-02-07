@@ -1,41 +1,36 @@
 import os
 from common.vehicle_type import VehicleType
 import cv2
+from ultralytics import YOLO
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
+
+    # TODO : move this somewhere else, don't what it to run every time the function is called
+    model = YOLO('yolov8n.pt')
+
+    # class ID of 'bicycle' in the model
+    BIKE_ID = 1
+
     video = cv2.VideoCapture(vid)
     video.write_videofile(f"processed_videos/processed_{id}.mp4")
 
     path = f"processed_videos/processed_{id}.mp4"
-    capture = cv2.VideoCapture(path)
-
-    # define object detection model
-    bike_cascade = cv2.CascadeClassifier("models/bike.xml")
-
-    # initialise frame
-    frame_data = []
-    frame_number = 1
-
-    # TODO : change from while True to something more fail-safe
-    while True:
-        ret, frame = capture.read()
-
-        if (ret):
-            # detect bikes
-            grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            bikes = bike_cascade.detectMultiScale(grey, 1.1, 0)
-
-            for (x, y, w, h) in bikes:
-                # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
-                frame_data.append((frame_number, int(x),int(y),int(w),int(h)))
-
-            frame_number += 1
-            # cv2.imshow('frame', frame)
-
-        else:
-            break
     
-    capture.release()
+    # set stream to True to analyse by frame
+    # can add show=True to see detection
+    # TODO : look into not using stream, instead processing whole video at once
+    results = model(source=path, stream=True)
+
+    # after loop will contains a list of (frame_number, x, y, w, h)
+    bike_data = []
+
+    for frame_number, result in enumerate(results):
+        # TODO : account for multiple bikes, currently using a dictionary to only get one bike
+        detected_objects = {int(class_id):pos for class_id,pos in zip(result.boxes.cls.tolist(), result.boxes.xywh.tolist())}
+
+        if (BIKE_ID in detected_objects.keys()):
+            x, y, w, h = detected_objects[BIKE_ID]
+            bike_data.append((frame_number, x, y, w, h))
 
 
     os.remove(f"processed_videos/processed_{id}.mp4")
