@@ -2,10 +2,8 @@ import os
 from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
-import time
-import datetime
-import numpy as np
 from typing import List, Tuple
+import numpy as np
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
 
@@ -16,11 +14,7 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     BIKE_ID = 1
 
     video = cv2.VideoCapture(vid)
-    fps = video.get(cv2.CAP_PROP_FPS)
-    video.write_videofile(f"processed_videos/processed_{id}.mp4") # Make video file format uniform in MP4
-
-    path = f"processed_videos/processed_{id}.mp4"
-    video = cv2.VideoCapture(path)
+    video.write_videofile(f"processed_videos/processed_{id}.mp4")
 
     path = f"processed_videos/processed_{id}.mp4"
     
@@ -29,35 +23,22 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     # TODO : look into not using stream, instead processing whole video at once
     results = model(source=path, stream=True)
 
-    # initialise frame
-    frame_data = []
-    frame_number = 1
+    # after loop will contains a list of (frame_number, x, y, w, h)
+    bike_data = []
 
-    # TODO : change from while True to something more fail-safe
-    while True:
-        ret, frame = capture.read()
+    for frame_number, result in enumerate(results):
+        # TODO : account for multiple bikes, currently using a dictionary to only get one bike
+        detected_objects = {int(class_id):pos for class_id,pos in zip(result.boxes.cls.tolist(), result.boxes.xywh.tolist())}
 
-        if (ret):
-            # detect bikes
-            grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            bikes = bike_cascade.detectMultiScale(grey, 1.1, 0)
-
-            for (x, y, w, h) in bikes:
-                # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
-                frame_data.append((frame_number, int(x),int(y),int(w),int(h)))
-
-            frame_number += 1
-            # cv2.imshow('frame', frame)
-
-        else:
-            break
-    
-    capture.release()
+        if (BIKE_ID in detected_objects.keys()):
+            x, y, w, h = detected_objects[BIKE_ID]
+            bike_data.append((frame_number, x, y, w, h))
 
 
-    os.remove(path)
-    os.remove(vid) # Clean up
+    os.remove(f"processed_videos/processed_{id}.mp4")
+    os.remove(vid)
     pass
+
 
 def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
     midpoints = np.zeros((len(frames), 2))  # 2D array for x,y coordinates
