@@ -1,20 +1,12 @@
 import os
 from common.vehicle_type import VehicleType
 import cv2
-from ultralytics import YOLO
 import time
 import datetime
 import numpy as np
 from typing import List, Tuple
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
-
-    # TODO : move this somewhere else, don't what it to run every time the function is called
-    model = YOLO('yolov8n.pt')
-
-    # class ID of 'bicycle' in the model
-    BIKE_ID = 1
-
     video = cv2.VideoCapture(vid)
     fps = video.get(cv2.CAP_PROP_FPS)
     video.write_videofile(f"processed_videos/processed_{id}.mp4") # Make video file format uniform in MP4
@@ -23,11 +15,10 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     video = cv2.VideoCapture(path)
 
     path = f"processed_videos/processed_{id}.mp4"
-    
-    # set stream to True to analyse by frame
-    # can add show=True to see detection
-    # TODO : look into not using stream, instead processing whole video at once
-    results = model(source=path, stream=True)
+    capture = cv2.VideoCapture(path)
+
+    # define object detection model
+    bike_cascade = cv2.CascadeClassifier("models/bike.xml")
 
     # initialise frame
     frame_data = []
