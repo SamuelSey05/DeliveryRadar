@@ -2,10 +2,8 @@ import os
 from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
-import time
-import datetime
-import numpy as np
 from typing import List, Tuple
+import numpy as np
 
 def processVideo(id:int, vid:os.path, type:VehicleType):
 
@@ -16,11 +14,7 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     BIKE_ID = 1
 
     video = cv2.VideoCapture(vid)
-    fps = video.get(cv2.CAP_PROP_FPS)
-    video.write_videofile(f"processed_videos/processed_{id}.mp4") # Make video file format uniform in MP4
-
-    path = f"processed_videos/processed_{id}.mp4"
-    video = cv2.VideoCapture(path)
+    video.write_videofile(f"processed_videos/processed_{id}.mp4")
 
     path = f"processed_videos/processed_{id}.mp4"
     
@@ -41,9 +35,10 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
             bike_data.append((frame_number, x, y, w, h))
 
 
-    os.remove(path)
-    os.remove(vid) # Clean up
+    os.remove(f"processed_videos/processed_{id}.mp4")
+    os.remove(vid)
     pass
+
 
 def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
     midpoints = np.zeros((len(frames), 2))  # 2D array for x,y coordinates
