@@ -5,7 +5,7 @@ from ultralytics import YOLO
 from typing import List, Tuple
 import numpy as np
 
-def processVideo(id:int, vid:os.path, type:VehicleType):
+def processVideo(id:int, vid:str, type:VehicleType):
 
     # TODO : move this somewhere else, don't what it to run every time the function is called
     model = YOLO('yolov8n.pt')
@@ -14,9 +14,29 @@ def processVideo(id:int, vid:os.path, type:VehicleType):
     BIKE_ID = 1
 
     video = cv2.VideoCapture(vid)
-    video.write_videofile(f"processed_videos/processed_{id}.mp4")
+    
+    # Get video properties
+    fps = int(video.get(cv2.CAP_PROP_FPS))
+    frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    # Create VideoWriter object
+    output_path = f"processed_videos/processed_{id}.mp4"
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
+    
+    # Read and write frames
+    while True:
+        ret, frame = video.read()
+        if not ret:
+            break
+        out.write(frame)
+    
+    # Release resources
+    video.release()
+    out.release()
 
-    path = f"processed_videos/processed_{id}.mp4"
+    path = output_path
     
     # set stream to True to analyse by frame
     # can add show=True to see detection
