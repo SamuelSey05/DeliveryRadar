@@ -18,7 +18,10 @@
             (with pkgs.python311Packages; [
               pip
               venvShellHook
-            ]);
+              mysql-connector
+            ]) ++ [(
+              pkgs.writeScriptBin "load-db-pwd" "export DELIVERYRADAR_DB_PWD=$(cat ./db_pwd)"
+            )];
         };
       });
     };
