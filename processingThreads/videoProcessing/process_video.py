@@ -1,11 +1,11 @@
 import os
-from common.vehicle_type import VehicleType
+# from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple
 import numpy as np
 
-def processVideo(id:int, vid:str, type:VehicleType):
+def processVideo(id:int, vid:str):
 
     # TODO : move this somewhere else, don't what it to run every time the function is called
     model = YOLO('yolov8n.pt')
@@ -17,31 +17,13 @@ def processVideo(id:int, vid:str, type:VehicleType):
     
     # Get video properties
     fps = int(video.get(cv2.CAP_PROP_FPS))
-    frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    # Create VideoWriter object
-    output_path = f"processed_videos/processed_{id}.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-    
-    # Read and write frames
-    while True:
-        ret, frame = video.read()
-        if not ret:
-            break
-        out.write(frame)
-    
-    # Release resources
-    video.release()
-    out.release()
 
-    path = output_path
+    video.release()
     
     # set stream to True to analyse by frame
     # can add show=True to see detection
     # TODO : look into not using stream, instead processing whole video at once
-    results = model(source=path, stream=True)
+    results = model(source=vid, stream=True)
 
     # after loop will contains a list of (frame_number, x, y, w, h)
     bike_data = []
@@ -55,9 +37,11 @@ def processVideo(id:int, vid:str, type:VehicleType):
             bike_data.append((frame_number, x, y, w, h))
 
 
-    os.remove(f"processed_videos/processed_{id}.mp4")
-    os.remove(vid)
-    pass
+    # os.remove(vid)
+    
+    print(bike_data)
+    print(fps)
+    return frames_to_speed(bike_data, fps)
 
 
 def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
@@ -74,3 +58,5 @@ def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
     pixels_per_second = diffs * fps * weights[1:] # Convert to pixels per second using weights to account for frames without rectangles
 
     return np.average(pixels_per_second) # Return average speed in pixels per second
+
+print(processVideo(1, "processingThreads/assets/bike1.mov"))
