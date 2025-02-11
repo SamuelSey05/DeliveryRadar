@@ -1,29 +1,81 @@
 import os
-from common.vehicle_type import VehicleType
+# from common.vehicle_type import VehicleType
+from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
 import cv2
 import time
 import datetime
 import numpy as np
 
-def compute_speed(prev_bbox, curr_bbox, homography_matrix, pixels_per_meter, fps):
+def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_homography=False, reference_points=None):
     """
-    Convert pixel movement into real-world speed using homography.
+    Convert pixel speed into real-world speed using optional homography correction.
 
     Parameters:
-    - prev_bbox: (x, y, w, h) tuple of the tracked object in the previous frame
-    - curr_bbox: (x, y, w, h) tuple of the tracked object in the current frame
-    - homography_matrix: 3x3 matrix for perspective transformation
-    - pixels_per_meter: Scaling factor (determined from calibration)
-    - fps: Frames per second of the video
+    - pixels_per_sec: Speed in pixels per second.
+    - homography_matrix: 3x3 matrix for perspective transformation.
+    - pixels_per_meter: Scaling factor (determined from calibration).
+    - apply_homography: If True, applies homography transformation to adjust for perspective.
+    - reference_points: List of tuples [(px1, py1), (px2, py2)] for mapping homography.
 
     Returns:
-    - speed_kph: Speed in kilometers per hour (km/h)
+    - speed_kph: Speed in kilometers per hour (km/h).
     """
-    # Compute homography matrix
 
-    # Convert bounding box coordinates to real-world coordinates
+    def apply_homography_correction(px_per_sec, homography_matrix, reference_points):
+        """
+        Adjust pixel speed using homography mapping.
 
-    # Compute displacement in meters
+        Parameters:
+        - px_per_sec: Pixel speed per second.
+        - homography_matrix: 3x3 homography matrix.
+        - reference_points: Two points (before and after homography) to estimate real distance.
 
-    # Compute speed in km/h
-    pass
+        Returns:
+        - real_world_speed_mps: Speed in meters per second.
+        """
+        if reference_points is None or len(reference_points) != 2:
+            raise ValueError("Reference points must contain exactly two (x, y) coordinate pairs.")
+
+        # Convert reference points to homogeneous coordinates
+        p1 = np.array([reference_points[0][0], reference_points[0][1], 1]).reshape(3, 1)
+        p2 = np.array([reference_points[1][0], reference_points[1][1], 1]).reshape(3, 1)
+
+        # Transform points using homography
+        real_p1 = np.dot(homography_matrix, p1)
+        real_p2 = np.dot(homography_matrix, p2)
+
+        # Normalize homogeneous coordinates
+        real_p1 /= real_p1[2]
+        real_p2 /= real_p2[2]
+
+        # Compute real-world distance between transformed points
+        real_distance = np.linalg.norm(real_p2[:2] - real_p1[:2])
+
+        # Compute scale factor dynamically (pixels per meter)
+        pixels_per_meter_dynamic = np.linalg.norm(np.array(reference_points[1]) - np.array(reference_points[0])) / real_distance
+
+        # Convert pixel speed to real-world speed
+        return px_per_sec / pixels_per_meter_dynamic
+
+    if apply_homography:
+        real_speed_mps = apply_homography_correction(pixels_per_sec, homography_matrix, reference_points)
+    else:
+        real_speed_mps = pixels_per_sec / pixels_per_meter
+
+    speed_kph = real_speed_mps * 3.6
+
+    return speed_kph
+
+# Define manually calibrated reference points
+pixel_points = [(500, 400), (800, 400), (1100, 200), (300, 200)]
+real_world_points = [(0, 0), (10, 0), (10, 20), (0, 20)]  # In meters
+
+# Compute homography matrix
+homography_matrix = compute_homography_matrix(pixel_points, real_world_points)
+
+pixel_speed_per_sec = 120 
+pixels_per_meter = 50  
+
+speed_kph = compute_speed(pixel_speed_per_sec, homography_matrix, pixels_per_meter, apply_homography=True, reference_points=[pixel_points[0], pixel_points[1]])
+
+print(f"Estimated Speed with Homography: {speed_kph:.2f} km/h")
