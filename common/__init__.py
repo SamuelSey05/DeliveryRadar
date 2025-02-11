@@ -1,1 +1,1 @@
-from vehicle_type import *
+from .vehicle_type import *
