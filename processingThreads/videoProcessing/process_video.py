@@ -4,6 +4,7 @@ import cv2
 from ultralytics import YOLO
 from typing import List, Tuple
 import numpy as np
+from scipy.stats import binned_statistic
 
 def processVideo(id:int, vid:str):
 
@@ -39,24 +40,29 @@ def processVideo(id:int, vid:str):
 
     # os.remove(vid)
     
-    print(bike_data)
-    print(fps)
+    # print(bike_data)
+    # print(fps)
     return frames_to_speed(bike_data, fps)
 
 
-def frames_to_speed(frames: List[Tuple[float, float, float, float]], fps: int):
+def frames_to_speed(frames: List[Tuple[int, float, float, float, float]], fps: int):
     midpoints = np.zeros((len(frames), 2))  # 2D array for x,y coordinates
     weights = np.zeros(len(frames))  # One less weight than frames, to match diffs
+    frame_numbers = np.zeros(len(frames))
     prev_j = frames[0][0] - 1
     
     for i, (j, x, y, w, h) in enumerate(frames):
         midpoints[i] = [x + w/2, y + h/2]
         weights[i] = 1/(j - prev_j) # Weight is inversely proportional to the amount of time between frames
+        frame_numbers[i] = j
         prev_j = j
 
     diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
     pixels_per_second = diffs * fps * weights[1:] # Convert to pixels per second using weights to account for frames without rectangles
 
-    return np.average(pixels_per_second) # Return average speed in pixels per second
+    # Bin data into seconds (groups of fps frames)
+    binned_mean = binned_statistic(frame_numbers[1:], pixels_per_second, statistic='mean', bins=len(frames)//fps)
 
-print(processVideo(1, "processingThreads/assets/bike1.mov"))
+    return binned_mean.statistic # Return average speed in pixels per second for each second (group of fps frames)
+
+# print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike1.mov"))
