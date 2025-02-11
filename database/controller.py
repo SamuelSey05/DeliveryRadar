@@ -22,14 +22,15 @@ class DBConnectionFailure(Exception):
 class DBController:
     
     def __init__(self):
-        self.connection = self.connect()
+        self.connection = None
+        self.connect()
         
     def __del__(self):
         self.disconnect()
             
     def connect(self) -> connector.MySQLConnection:
         if self.connection == None:
-            self.connection = connector.connect(host="cstdeliveryradar.soc.srcf.net", user="deliveryradar", password=env("DELIVERYRADAR_DB_PWD"))
+            self.connection = connector.connect(host="mysql.internal.srcf.net", user="deliveryradar", password=env("DELIVERYRADAR_DB_PWD"), database="cstdeliveryradar")
         return self.connection
     
     def disconnect(self) -> None:
@@ -57,9 +58,14 @@ class DBController:
             data = []
             for i in range(cursor.rowcount):
                 row = cursor.fetchone()
-                tmp = DBRow(id = row[0], speed=row[1], time=[])
+                print(row)
+                tmp = DBRow(id = row[0], speed=row[1], time=[], )
             cursor.close()
             return data
         
-        
-        
+def test():
+    controller = DBController()
+    controller.getIncidents()
+    
+if __name__ == "__main__":
+    test()
