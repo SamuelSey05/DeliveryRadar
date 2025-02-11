@@ -1,0 +1,1 @@
+export DELIVERYRADAR_DB_PWD="$(cat ./db_pwd)"
