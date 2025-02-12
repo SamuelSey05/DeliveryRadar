@@ -9,40 +9,53 @@ from scipy.stats import binned_statistic
 def processVideo(id:int, vid:str):
 
     # TODO : move this somewhere else, don't what it to run every time the function is called
-    model = YOLO('yolov8n.pt')
+    model = YOLO('yolo11n.pt')
 
     # class ID of 'bicycle' in the model
     BIKE_ID = 1
 
-    video = cv2.VideoCapture(vid)
+    bike_data = {}
+    frame_number = 1
+
+    capture = cv2.VideoCapture(vid)
     
     # Get video properties
-    fps = int(video.get(cv2.CAP_PROP_FPS))
+    fps = int(capture.get(cv2.CAP_PROP_FPS))
 
-    video.release()
-    
-    # set stream to True to analyse by frame
-    # can add show=True to see detection
-    # TODO : look into not using stream, instead processing whole video at once
-    results = model(source=vid, stream=True)
+    while capture.isOpened():
+        ret, frame = capture.read()
 
-    # after loop will contains a list of (frame_number, x, y, w, h)
-    bike_data = []
+        if not ret:
+            break
 
-    for frame_number, result in enumerate(results):
-        # TODO : account for multiple bikes, currently using a dictionary to only get one bike
-        detected_objects = {int(class_id):pos for class_id,pos in zip(result.boxes.cls.tolist(), result.boxes.xywh.tolist())}
+        results = model.track(source=frame, classes=[BIKE_ID], persist=True)
 
-        if (BIKE_ID in detected_objects.keys()):
-            x, y, w, h = detected_objects[BIKE_ID]
-            bike_data.append((frame_number, x, y, w, h))
+        boxes = results[0].boxes.xywh.tolist()
+        track_ids = results[0].boxes.id.int().tolist() if results[0].boxes.id is not None else []
 
+        for box, id in zip(boxes, track_ids):
+            x, y, w, h = box
+
+            if bike_data.get(id) is None:
+                bike_data[id] = []
+            
+            bike_data[id].append((frame_number, x, y, w, h))
+
+        frame_number += 1
 
     # os.remove(vid)
     
     # print(bike_data)
     # print(fps)
-    return frames_to_speed(bike_data, fps)
+
+    capture.release()
+
+    bike_speeds = {}
+    for id in bike_data:
+        bike_speeds[id] = frames_to_speed(bike_data[id], fps)
+
+
+    return bike_speeds
 
 
 def frames_to_speed(frames: List[Tuple[int, float, float, float, float]], fps: int):
