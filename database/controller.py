@@ -5,20 +5,44 @@ from typing import List, TypedDict
 from datetime import datetime
 import sys
 import traceback
+from json import dumps, loads
 
+
+class LatLon(TypedDict):
+    lat: float
+    lon: float
 
 class W3W(TypedDict):
     word1:str
     word2:str
     word3:str
 
+locationClass = LatLon
+test_data = True
+
 class DBRow(TypedDict):
     id:str
     speed:float
     time:datetime
-    location:W3W
+    location:locationClass
+    
+def dump_time(time:datetime)->str:
+    return time.isoformat()
 
-test_data = True
+def load_time(timestr:str)->datetime:
+    return datetime.fromisoformat(timestr)
+
+def dump_location(location:locationClass)->str:
+    return dumps(location)
+
+def load_location(jsons:str)->locationClass:
+    return loads(jsons)
+    
+def prepare_insert(id:str, speeds:List[float], time:datetime, location:locationClass)->str:
+    res = ""
+    for speed in speeds:
+        res += f"('{id}', '{speed}', '{dump_time(time)}', '{dump_location(location)}', '{int(test_data)}'),"
+    return res.removesuffix(",")
 
 class DBConnectionFailure(Exception):
     pass
@@ -73,20 +97,51 @@ class DBController:
             raise DBConnectionFailure
         else:
             cursor = self.connection.cursor()
-            cursor.execute("SELECT hash AS id, speed, time, location FROM Incidents")
+            cursor.execute("SELECT hash AS id, speed, time, location FROM Incidents;")
             data = []
-            for i in range(cursor.rowcount):
+            row = cursor.fetchone()
+            while row is not None:
+                print( row )
+                tmp = DBRow(id = row[0], speed=row[1], time=row[2], location=load_location(row[3]))
+                print(tmp)
+                data.append(tmp)
                 row = cursor.fetchone()
-                print(row)
-                tmp = DBRow(id = row[0], speed=row[1], time=[], )
             cursor.fetchall()
             cursor.close()
             self.connection.commit()
             return data
         
+    def addIncident(self, id:str, speed:float, time:datetime, location:locationClass)->bool:
+        if self.connection == None or not self.connection.is_connected():
+            raise DBConnectionFailure
+        else:
+            cursor = self.connection.cursor()
+            command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, [speed], time, location)};"
+            print (command)
+            cursor.execute(command)
+            print(cursor.fetchwarnings(), file=sys.stderr)
+            cursor.fetchall()
+            self.connection.commit()
+            return True
+            
+    def addIncidents(self, id:str, speeds:List[float], time:datetime, location:locationClass):
+        if self.connection == None or not self.connection.is_connected():
+            raise DBConnectionFailure
+        else:
+            cursor = self.connection.cursor()
+            command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, speeds, time, location)};"
+            print (command)
+            cursor.execute(command)
+            print(cursor.fetchwarnings(), file=sys.stderr)
+            cursor.fetchall()
+            self.connection.commit()
+            return True
+    
 def test():
     controller = DBController()
-    controller.getIncidents()
+    #controller.addIncident("test", 21.4, datetime.now(), locationClass(lat = 52.205276, lon = 0.119167))
+    tmp = controller.getIncidents()
+    input()
     
 if __name__ == "__main__":
     test()
