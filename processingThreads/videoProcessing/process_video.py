@@ -50,12 +50,7 @@ def processVideo(id:int, vid:str):
 
     capture.release()
 
-    bike_speeds = {}
-    for id in bike_data:
-        bike_speeds[id] = frames_to_speed(bike_data[id], fps)
-
-
-    return bike_speeds
+    return frames_to_speed(bike_data, fps)
 
 
 def frames_to_speed(frames: List[Tuple[int, float, float, float, float]], fps: int):
