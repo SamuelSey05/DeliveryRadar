@@ -1,11 +1,12 @@
-## TODO
-
-from controller import DBController
+from database.controller import DBController
+from common.db_types import locationClass
+from typing import List
+import datetime
 
 _controller = DBController()
 
-def insertData():
-    pass
+def insertData(id:str, speeds:List[float], time:datetime, location:locationClass):
+    _controller.addIncidents(id, speeds, time, location)
 
 def getIncidents():
     """
