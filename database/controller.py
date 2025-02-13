@@ -1,31 +1,13 @@
 import mysql.connector as connector
+from common.db_types import *
 from os import getenv as env
 import os.path
-from typing import List, TypedDict
+from typing import List
 from datetime import datetime
 import sys
 import traceback
 from json import dumps, loads
-
-
-class LatLon(TypedDict):
-    lat: float
-    lon: float
-
-class W3W(TypedDict):
-    word1:str
-    word2:str
-    word3:str
-
-locationClass = LatLon
-test_data = True
-
-class DBRow(TypedDict):
-    id:str
-    speed:float
-    time:datetime
-    location:locationClass
-    
+ 
 def dump_time(time:datetime)->str:
     return time.isoformat()
 
