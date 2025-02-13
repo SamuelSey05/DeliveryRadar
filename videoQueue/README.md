@@ -19,6 +19,7 @@ The package is recieved as a `.zip` file, containing `upload.[mp4/mkv/mov]` and 
         "day":01
     },
     time:{
+        "hour":0,
         "minutes":0,
         "seconds":0
     },
