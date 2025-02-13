@@ -1,3 +1,10 @@
-__pycache__/
 *.pyc
 *.pt
+
+test.py
+common.zip
+**/__pycache__/**
+
+db_pwd
+.direnv/**
+.venv/**
