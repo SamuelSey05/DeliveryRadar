@@ -33,13 +33,13 @@ def processVideo(id:int, vid:str):
         boxes = results[0].boxes.xywh.tolist()
         track_ids = results[0].boxes.id.int().tolist() if results[0].boxes.id is not None else []
 
-        for box, id in zip(boxes, track_ids):
+        for box, bike_id in zip(boxes, track_ids):
             x, y, w, h = box
 
-            if bike_data.get(id) is None:
-                bike_data[id] = []
+            if bike_data.get(bike_id) is None:
+                bike_data[bike_id] = []
             
-            bike_data[id].append((frame_number, x, y, w, h))
+            bike_data[bike_id].append((frame_number, x, y, w, h))
 
         frame_number += 1
 
