@@ -1,12 +1,13 @@
 import os
-from common.vehicle_type import VehicleType
+import time
+# from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
 
-def processVideo(id:int, vid:str, vehicle_type: VehicleType):
+def processVideo(id:int, vid:str):
 
     # TODO : move this somewhere else, don't what it to run every time the function is called
     model = YOLO('yolo11n.pt')
@@ -44,16 +45,16 @@ def processVideo(id:int, vid:str, vehicle_type: VehicleType):
         frame_number += 1
 
     # os.remove(vid)
-    
+
     capture.release()
 
     return frames_to_speed(bike_data, fps)
-
+    
 def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float, float]]], fps: int) -> Dict[int, np.ndarray]:
     speeds = {}
 
     for bike_id, frames in bikes_frames.items(): # For each bike
-        if len(frames) < 2:
+        if len(frames) < fps:
             continue
         frames_array = np.array(frames)
         midpoints = frames_array[:, 1:3] + frames_array[:, 3:5] / 2  # 2D array for x,y coordinates
@@ -61,11 +62,10 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
         weights = 1 / np.diff(frame_numbers) # Calculate weights based on frame differences
 
         diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
-
         # Bin data into seconds (groups of fps frames)
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps)
         speeds[bike_id] = binned_mean.statistic
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
-print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike1.mov"))
+print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
