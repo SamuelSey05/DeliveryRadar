@@ -1,5 +1,5 @@
 import os
-# from common.vehicle_type import VehicleType
+from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple
