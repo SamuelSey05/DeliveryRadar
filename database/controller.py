@@ -40,11 +40,12 @@ class DBController:
     def connect(self) -> connector.MySQLConnection:
         if self.connection == None:
             try:
+                con = lambda pwd: connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=pwd, database="cstdeliveryradar")
                 if os.path.isfile(os.path.abspath("db_pwd")):
                     with open(os.path.abspath("db_pwd"), "r") as f:
-                        self.connection = connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=f.read(), database="cstdeliveryradar")
+                        self.connection = con(f.read())
                 else:
-                    self.connection = connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=env("DELIVERYRADAR_DB_PWD"), database="cstdeliveryradar")
+                    self.connection = con(env("DELIVERYRADAR_DB_PWD"))
             except:
                 
                 raise DBConnectionFailure
