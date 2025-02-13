@@ -1,5 +1,5 @@
 import os
-# from common.vehicle_type import VehicleType
+from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple, Dict
@@ -7,35 +7,48 @@ import numpy as np
 from scipy.stats import binned_statistic
 from calculate_homography import compute_homography_matrix
 
-def processVideo(id: int, vid: str):
+def processVideo(id:int, vid:str, vehicle_type: VehicleType):
+
+    # TODO : move this somewhere else, don't what it to run every time the function is called
     model = YOLO('yolo11n.pt')
+
+    # class ID of 'bicycle' in the model
     BIKE_ID = 1
-    bike_data: Dict[int, List[Tuple[int, float, float, float, float]]] = {}
-    frame_number = 0
+
+    bike_data = {}
+    frame_number = 1
 
     capture = cv2.VideoCapture(vid)
+    
+    # Get video properties
     fps = int(capture.get(cv2.CAP_PROP_FPS))
 
     while capture.isOpened():
         ret, frame = capture.read()
+
         if not ret:
             break
 
         results = model.track(source=frame, classes=[BIKE_ID], persist=True)
+
         boxes = results[0].boxes.xywh.tolist()
         track_ids = results[0].boxes.id.int().tolist() if results[0].boxes.id is not None else []
 
-        for box, track_id in zip(boxes, track_ids):
+        for box, id in zip(boxes, track_ids):
             x, y, w, h = box
-            if track_id not in bike_data:
-                bike_data[track_id] = []
-            bike_data[track_id].append((frame_number, x, y, w, h))
+
+            if bike_data.get(id) is None:
+                bike_data[id] = []
+            
+            bike_data[id].append((frame_number, x, y, w, h))
 
         frame_number += 1
 
+    # os.remove(vid)
+    
     capture.release()
 
-    return (id, frames_to_speed(bike_data, fps))
+    return frames_to_speed(bike_data, fps)
 
 def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float, float]]], fps: int) -> Dict[int, np.ndarray]:
     speeds = {}
