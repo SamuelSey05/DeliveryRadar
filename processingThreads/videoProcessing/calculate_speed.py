@@ -6,7 +6,7 @@ import time
 import datetime
 import numpy as np
 
-def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_homography=False, reference_points=None):
+def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, apply_homography=False, reference_points=None):
     """
     Convert pixel speed into real-world speed using optional homography correction.
 
@@ -65,18 +65,3 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_hom
     speed_kph = real_speed_mps * 3.6
 
     return speed_kph
-
-
-
-pixel_points = [(500, 400), (800, 400), (1100, 200), (300, 200)]
-real_world_points = [(0, 0), (10, 0), (10, 20), (0, 20)]  # In meters
-
-homography_matrix = compute_homography_matrix(pixel_points, real_world_points)
-
-pixels_per_sec = np.array([120, 130, 110, 100])
-pixels_per_meter = 50
-
-speed_kph = compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_homography=True, reference_points=[pixel_points[0], pixel_points[1]])
-
-formatted_speeds = ', '.join([f"{speed:.2f}" for speed in speed_kph])
-print(f"Speeds per second (km/h): [{formatted_speeds}]")
