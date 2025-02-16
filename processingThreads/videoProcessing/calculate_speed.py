@@ -11,27 +11,27 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_hom
     Convert pixel speed into real-world speed using optional homography correction.
 
     Parameters:
-    - pixels_per_sec: Speed in pixels per second.
+    - pixels_per_sec: NumPy array of speeds in pixels per second.
     - homography_matrix: 3x3 matrix for perspective transformation.
     - pixels_per_meter: Scaling factor (determined from calibration).
     - apply_homography: If True, applies homography transformation to adjust for perspective.
     - reference_points: List of tuples [(px1, py1), (px2, py2)] for mapping homography.
 
     Returns:
-    - speed_kph: Speed in kilometers per hour (km/h).
+    - speed_kph: NumPy array of speeds in kilometers per hour (km/h).
     """
 
-    def apply_homography_correction(px_per_sec, homography_matrix, reference_points):
+    def apply_homography_correction(px_per_sec: np.ndarray, homography_matrix: np.ndarray, reference_points: list) -> np.ndarray:
         """
         Adjust pixel speed using homography mapping.
 
         Parameters:
-        - px_per_sec: Pixel speed per second.
+        - px_per_sec: NumPy array of pixel speeds per second.
         - homography_matrix: 3x3 homography matrix.
         - reference_points: Two points (before and after homography) to estimate real distance.
 
         Returns:
-        - real_world_speed_mps: Speed in meters per second.
+        - NumPy array of speeds in meters per second.
         """
         if reference_points is None or len(reference_points) != 2:
             raise ValueError("Reference points must contain exactly two (x, y) coordinate pairs.")
@@ -66,16 +66,17 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_hom
 
     return speed_kph
 
-# Define manually calibrated reference points
+
+
 pixel_points = [(500, 400), (800, 400), (1100, 200), (300, 200)]
 real_world_points = [(0, 0), (10, 0), (10, 20), (0, 20)]  # In meters
 
-# Compute homography matrix
 homography_matrix = compute_homography_matrix(pixel_points, real_world_points)
 
-pixel_speed_per_sec = 120 
-pixels_per_meter = 50  
+pixels_per_sec = np.array([120, 130, 110, 100])
+pixels_per_meter = 50
 
-speed_kph = compute_speed(pixel_speed_per_sec, homography_matrix, pixels_per_meter, apply_homography=True, reference_points=[pixel_points[0], pixel_points[1]])
+speed_kph = compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter, apply_homography=True, reference_points=[pixel_points[0], pixel_points[1]])
 
-print(f"Estimated Speed with Homography: {speed_kph:.2f} km/h")
+formatted_speeds = ', '.join([f"{speed:.2f}" for speed in speed_kph])
+print(f"Speeds per second (km/h): [{formatted_speeds}]")
