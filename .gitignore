@@ -5,3 +5,4 @@ common.zip
 db_pwd
 .direnv/**
 .venv/**
+.vscode
