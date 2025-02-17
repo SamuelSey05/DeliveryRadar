@@ -1,6 +1,6 @@
+from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec
 from queue import Queue
 import os.path
-from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec
 from zipfile import is_zipfile, ZipFile
 from fnmatch import fnmatch
 from json import loads
@@ -41,7 +41,7 @@ class VideoQueue():
                     if f"upload.{ext}" in files:
                         upload = True
                 if not upload:
-                    raise SubmissionError(f"Cannot find `upload.[{"/".join(zipspec.videoExtensions)}]`")
+                    raise SubmissionError(f"Cannot find `upload.[{'/'.join(zipspec.videoExtensions)}]`")
                 ## Once Submission Checked for Correctness
                 fileHash = hashFile(submission)
                 try:
@@ -55,3 +55,16 @@ class VideoQueue():
                 raise SubmissionError("Submission is not a valid ZipFile") 
         else:
             raise FileNotFoundError()
+        
+    def test_enqueue():
+        from common import locationClass
+        from json import dumps
+        with ZipFile("test.zip", "w") as f:
+            incident = zipspec.Incident(location=locationClass(lat = 52.205276, lon = 0.119167), date=zipspec.jsonDate(year=1970, month=1, day=1), time=zipspec.jsonTime(hour=0, minute=0, second=0), vehicle="Bike")
+            f.writestr("incident.json", dumps(incident))
+            f.writestr("upload.mp4", "test") ## TODO: Test with actual video
+        q = VideoQueue()
+        q.enqueue(os.path.abspath("test.zip"))
+
+if __name__=="__main__":
+    VideoQueue.test_enqueue()
