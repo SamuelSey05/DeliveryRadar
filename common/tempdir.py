@@ -12,6 +12,12 @@ class TempDir():
         except OSError:
             print ("Temporary Directory Cannot be Deleted!", file=stderr)
             
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self
+            
     def path(self):
         return self._path
     
