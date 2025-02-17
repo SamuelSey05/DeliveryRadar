@@ -47,7 +47,7 @@ class VideoQueue():
                 try:
                     os.rename(submission, f"{self.storage.path()}/{fileHash}.zip")
                 except OSError:
-                    raise CannotMoveZip
+                    raise CannotMoveZip()
                 self.q.put(fileHash)
 
                 return fileHash
@@ -56,15 +56,46 @@ class VideoQueue():
         else:
             raise FileNotFoundError()
         
-    def test_enqueue():
-        from common import locationClass
-        from json import dumps
-        with ZipFile("test.zip", "w") as f:
-            incident = zipspec.Incident(location=locationClass(lat = 52.205276, lon = 0.119167), date=zipspec.jsonDate(year=1970, month=1, day=1), time=zipspec.jsonTime(hour=0, minute=0, second=0), vehicle="Bike")
-            f.writestr("incident.json", dumps(incident))
-            f.writestr("upload.mp4", "test") ## TODO: Test with actual video
-        q = VideoQueue()
-        q.enqueue(os.path.abspath("test.zip"))
+    def dequeue(self, dir:os.path)->str:
+        """
+        Removes a submission from the video queue, moving it to a specified directory, and returning the hash of the submission
+
+        Args:
+            dir (os.path): Target directory to move the submission to
+
+        Raises:
+            CannotMoveZip: OS was unable to move the zip to the given directory
+            FileNotFoundError: Submission is missing from it's stored location, this should never occur unless some kind of cleanup happens on the tempdir during use
+
+        Returns:
+            str: sha256 hash of the submission, used as it's ID
+        """        
+        submission = self.q.get()
+        if os.path.exists(f"{self.storage.path()}/{submission}.zip"):
+            try:
+                os.rename(f"{self.storage.path()}/{submission}.zip", f"{dir}/{submission}.zip")
+            except OSError:
+                raise CannotMoveZip()
+            return submission
+        else:
+            raise FileNotFoundError()
+        
+def test_enqueue(q=VideoQueue()):
+    from common import locationClass
+    from json import dumps
+    with ZipFile("test.zip", "w") as f:
+        incident = zipspec.Incident(location=locationClass(lat = 52.205276, lon = 0.119167), date=zipspec.jsonDate(year=1970, month=1, day=1), time=zipspec.jsonTime(hour=0, minute=0, second=0), vehicle="Bike")
+        f.writestr("incident.json", dumps(incident))
+        f.writestr("upload.mp4", "test") ## TODO: Test with actual video
+    q.enqueue(os.path.abspath("test.zip"))
+        
+def test_dequeue():
+    q = VideoQueue()
+    test_enqueue(q)
+    with TempDir() as temp:
+        s = q.dequeue(temp.path())
+        print(f"{temp.path()}/{s}.zip")
+        input()
 
 if __name__=="__main__":
     VideoQueue.test_enqueue()
