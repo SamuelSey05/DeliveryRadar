@@ -68,4 +68,4 @@ def compute_homography_matrix(frame):
 
     homography_matrix, _ = cv2.findHomography(pixel_points, real_world_points, method=cv2.RANSAC)
 
-    return homography_matrix
+    return (homography_matrix, list(pixel_points[:2]))
