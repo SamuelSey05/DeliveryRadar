@@ -78,9 +78,9 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
 
         diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
-        speeds[bike_id] = binned_mean.statistic
+        # speeds[bike_id] = binned_mean.statistic
 
-        speed_in_km = compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points)
+        speeds[bike_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
