@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vgrid/react-leaflet-heatmap-layer": "^4.0.3",
     "leaflet": "^1.9.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-leaflet": "^5.0.0"
+    "react": "^18.0.0",
+    "react-bootstrap": "^2.10.6",
+    "react-dom": "^18.0.0",
+    "react-leaflet": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

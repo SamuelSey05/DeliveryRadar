@@ -14,7 +14,12 @@ body {
   background: rgba(255, 255, 255, 0.1);
   padding: 40px;
   border-radius: 10px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0px);
+  width: 40vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  flex: auto;
 }
 
 .app-title {
@@ -31,8 +36,11 @@ body {
   border-radius: 5px;
   cursor: pointer;
   transition: 0.3s;
+  height: 10vh;
 }
 
 .upload-button:hover {
   background: #265df2;
 }
+
+.rowC{display:flex; flex-direction:row; max-width: 80%; display: flex; padding: 20px}
