@@ -19,6 +19,7 @@
               pip
               venvShellHook
               mysql-connector
+              flask
             ]) ++ [(
               pkgs.writeScriptBin "load-db-pwd" "export DELIVERYRADAR_DB_PWD=$(cat ./db_pwd)"
             )];
