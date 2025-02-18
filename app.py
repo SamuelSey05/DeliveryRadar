@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-from flask import Flask, Request, request, url_for
+from flask import Flask, Request, request, url_for, render_template
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
 
 
 class R(Request):
     # Whitelist your SRCF and/or custom domains to access the site via proxy.
-    trusted_hosts = {"cstdeliveryradar.soc.srcf.net"}
+    trusted_hosts = ["cstdeliveryradar.soc.srcf.net"]
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="./leaflet-heatmap-comp/dist/assets", template_folder="./leaflet-heatmap-comp/dist")
 app.request_class = R
 
 # Used to secure cookies.  Generate a long, random string.
@@ -21,5 +21,10 @@ app.request_class = R
 
 @app.route("/")
 def index():
-    return 
+    return render_template("index.html")
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return render_template("index.html")
 
