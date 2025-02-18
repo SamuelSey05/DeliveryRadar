@@ -8,7 +8,7 @@ def compute_homography_matrix(frame):
     Assumes that the camera perspective is unchanged through the video.
 
     Parameters:
-    - frames: Video frame when object first detected.
+    - frame: Video frame when object first detected.
 
     Returns:
     - homography_matrix: 3x3 transformation matrix.
@@ -58,9 +58,7 @@ def compute_homography_matrix(frame):
 
         return np.array(pixel_points, dtype=np.float32), np.array(real_world_points, dtype=np.float32)
 
-    # Process the first frame
-    first_frame = frame
-    lines = detect_lane_edges(first_frame)
+    lines = detect_lane_edges(frame)
     ref_points = extract_reference_points(lines)
 
     if ref_points is None:
