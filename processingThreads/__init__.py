@@ -1,1 +1,1 @@
-from object import ProcessingThread
+from .object import ProcessingThread
