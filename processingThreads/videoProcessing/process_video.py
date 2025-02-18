@@ -6,8 +6,8 @@ from ultralytics import YOLO
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
-from .calculate_homography import compute_homography_matrix
-from .calculate_speed import compute_speed
+from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
+from processingThreads.videoProcessing.calculate_speed import compute_speed
 
 def processVideo(id:int, vid:str):
 
@@ -48,17 +48,28 @@ def processVideo(id:int, vid:str):
 
     # os.remove(vid)
 
+
+    bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
+
+    if len(bike_data) == 0:
+        return {}
+    
+    frame_id = list(bike_data.values())[0][0][0]
+
+    capture.set(cv2.CAP_PROP_POS_FRAMES, frame_id - 1)
+    _, frame = capture.read()
+
+    homography_matrix, pixel_points = compute_homography_matrix(frame)
+
+    print(homography_matrix, pixel_points)
+
     capture.release()
 
-    return frames_to_speed(bike_data, fps)
+    return frames_to_speed(bike_data, fps, homography_matrix, pixel_points)
     
-def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float, float]]], fps: int) -> Dict[int, np.ndarray]:
+def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points) -> Dict[int, np.ndarray]:
     speeds = {}
-
-    bike_frames = {bike_id: frames for bike_id, frames in bike_frames if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
-
-    homography_matrix = compute_homography_matrix(bike_frames[0][0])
-
+    
     for bike_id, frames in bikes_frames.items(): # For each bike
         frames_array = np.array(frames)
         midpoints = frames_array[:, 1:3] + frames_array[:, 3:5] / 2  # 2D array for x,y coordinates of midpoints
@@ -66,11 +77,10 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
         weights = 1 / np.diff(frame_numbers) # Calculate weights based on frame differences
 
         diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
-        # Bin data into seconds (groups of fps frames)
-        binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps)
+        binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
         speeds[bike_id] = binned_mean.statistic
 
-        # speed_in_km = compute_speed(binned_mean.statistic, homography_matrix)
+        speed_in_km = compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points)
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
