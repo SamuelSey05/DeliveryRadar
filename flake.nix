@@ -14,12 +14,13 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
           venvDir = ".venv";
-          packages = with pkgs; [ python311 ] ++
+          packages = with pkgs; [ python311 nodejs_18 ] ++
             (with pkgs.python311Packages; [
               pip
               venvShellHook
               mysql-connector
               flask
+              gunicorn
             ]) ++ [(
               pkgs.writeScriptBin "load-db-pwd" "export DELIVERYRADAR_DB_PWD=$(cat ./db_pwd)"
             )];
