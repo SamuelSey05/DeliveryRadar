@@ -9,9 +9,8 @@ The package is recieved as a `.zip` file, containing `upload.[mp4/mkv/mov]` and 
 ```json
 {
     location:{
-        "word_1":"",
-        "word_2":"",
-        "word_3":""
+        "lat":0.0,
+        "lon":0.0
     },
     date:{
         "year":1970,
@@ -20,8 +19,8 @@ The package is recieved as a `.zip` file, containing `upload.[mp4/mkv/mov]` and 
     },
     time:{
         "hour":0,
-        "minutes":0,
-        "seconds":0
+        "minute":0,
+        "second":0
     },
     vehicle:"[bike/scooter]"
 }
