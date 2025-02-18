@@ -54,10 +54,10 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
     speeds = {}
 
     for bike_id, frames in bikes_frames.items(): # For each bike
-        if len(frames) < fps:
+        if len(frames) < fps: # If there are not enough frames for one second, skip bike
             continue
         frames_array = np.array(frames)
-        midpoints = frames_array[:, 1:3] + frames_array[:, 3:5] / 2  # 2D array for x,y coordinates
+        midpoints = frames_array[:, 1:3] + frames_array[:, 3:5] / 2  # 2D array for x,y coordinates of midpoints
         frame_numbers = frames_array[:, 0]
         weights = 1 / np.diff(frame_numbers) # Calculate weights based on frame differences
 
