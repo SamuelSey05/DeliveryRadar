@@ -2,13 +2,13 @@ import numpy as np
 import cv2
 
 
-def compute_homography_matrix(frames):
+def compute_homography_matrix(frame):
     """
-    Automatically extracts reference points from video frames and computes the homography matrix.
+    Automatically extracts reference points from video frame and computes the homography matrix.
     Assumes that the camera perspective is unchanged through the video.
 
     Parameters:
-    - frames: List of video frames.
+    - frame: Video frame when object first detected.
 
     Returns:
     - homography_matrix: 3x3 transformation matrix.
@@ -23,12 +23,10 @@ def compute_homography_matrix(frames):
 
         return lines
 
-    def extract_reference_points(lines, frame_shape):
+    def extract_reference_points(lines):
         """Extract bottom-left, bottom-right, top-left, top-right lane reference points."""
         if lines is None:
             return None
-
-        height, width = frame_shape[:2]
 
         # Store left and right lane points separately
         left_lane = []
@@ -60,10 +58,8 @@ def compute_homography_matrix(frames):
 
         return np.array(pixel_points, dtype=np.float32), np.array(real_world_points, dtype=np.float32)
 
-    # Process the first frame
-    first_frame = frames[0]
-    lines = detect_lane_edges(first_frame)
-    ref_points = extract_reference_points(lines, first_frame.shape)
+    lines = detect_lane_edges(frame)
+    ref_points = extract_reference_points(lines)
 
     if ref_points is None:
         raise ValueError("Failed to extract lane reference points for homography calibration.")
