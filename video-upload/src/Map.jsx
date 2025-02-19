@@ -1,17 +1,20 @@
 import "leaflet/dist/leaflet.css";
 import { LayersControl, MapContainer, TileLayer} from "react-leaflet";
 import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapLayer";
+//import "./Map.css"
 
 const HeatmapLayer = HeatmapLayerFactory();
 
 const mapContainerStyle = {
-  width: "80%",
-  height: "80%",
+  position: "relative",
+  width: "40vw",
+  height: "80vh",
   display: "block",
   marginLeft: "auto",
   marginRight: "auto",
   marginTop: "auto",
-  marginBottom: "auto"
+  marginBottom: "auto",
+  zIndex: "inherit",
 };
 
 const centre = [52.211, 0.092];
@@ -39,6 +42,6 @@ export default function Map() {
       
     </LayersControl.Overlay>
     </LayersControl>
-  </MapContainer>;
+  </MapContainer>
   </div>
 }

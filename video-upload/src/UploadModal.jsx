@@ -26,7 +26,7 @@ function UploadModal({ onClose }) {
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>Upload Video</h2>
+        <h3>Upload Video</h3>
         <form onSubmit={handleSubmit}>
           <label>Vehicle Type:</label>
           <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} required>

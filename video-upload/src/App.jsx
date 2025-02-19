@@ -15,7 +15,7 @@ function App() {
       </button>
       {isModalOpen && <UploadModal onClose={() => setIsModalOpen(false)} />}
     </div>
-    <div className="app-container dark-theme">
+    <div className="app-container dark-theme" style={zIndex: 500}>
       <Map></Map>
     </div>
     </div>

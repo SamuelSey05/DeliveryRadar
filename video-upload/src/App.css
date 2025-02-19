@@ -3,11 +3,11 @@ body {
   background: linear-gradient(to right, #1a1a2e, #16213e);
   color: white;
   text-align: center;
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0;
+  margin: auto;
+  width: 100vw;
 }
 
 .app-container {
@@ -15,11 +15,12 @@ body {
   padding: 40px;
   border-radius: 10px;
   backdrop-filter: blur(0px);
-  width: 40vw;
+  width: 45vw;
   height: 80vh;
   display: flex;
   flex-direction: column;
   flex: auto;
+  z-index: 500;
 }
 
 .app-title {
@@ -43,4 +44,4 @@ body {
   background: #265df2;
 }
 
-.rowC{display:flex; flex-direction:row; max-width: 80%; display: flex; padding: 20px}
+.rowC{display:flex; flex-direction:row; max-width: 80%; display: flex; margin: auto; gap: 5vw}
