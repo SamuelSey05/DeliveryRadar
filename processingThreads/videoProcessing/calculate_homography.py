@@ -75,3 +75,31 @@ def compute_homography_matrix(frame):
     homography_matrix, _ = cv2.findHomography(pixel_points, real_world_points, method=cv2.RANSAC)
 
     return (homography_matrix, list(pixel_points[:2]))
+
+
+def compute_homography_matrix_cones(cone_midpoints, cone_spacing_meters=5):
+    """
+    Computes the homography matrix using cone midpoints as reference points.
+
+    Parameters:
+    - cone_midpoints: List of (x, y) tuples representing cone midpoints in pixels.
+    - cone_spacing_meters: Real-world distance between two adjacent cones.
+
+    Returns:
+    - homography_matrix: 3x3 transformation matrix.
+    """
+    # Sort midpoints by their vertical (y) position (bottom to top)
+    cone_midpoints = sorted(cone_midpoints, key=lambda p: p[1])
+
+    # Convert cone midpoints to NumPy array
+    pixel_points = np.array(cone_midpoints, dtype=np.float32)
+
+    # Generate real-world points: All cones are in a straight line, 5m apart in the Y direction
+    real_world_points = np.array([
+        [0, i * cone_spacing_meters] for i in range(len(cone_midpoints))
+    ], dtype=np.float32)
+
+    # Compute homography matrix
+    homography_matrix, _ = cv2.findHomography(pixel_points, real_world_points, method=cv2.RANSAC)
+
+    return homography_matrix
