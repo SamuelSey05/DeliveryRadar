@@ -9,3 +9,5 @@ db_pwd
 .direnv/**
 .venv/**
 .vscode
+
+**/.DS_Store
