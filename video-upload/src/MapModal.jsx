@@ -52,13 +52,13 @@ function MapModal({ onConfirm, onClose }) {
   };
 
   return (
-    <div className="map-modal-overlay">
-      <div className="map-modal">
-        <div className="map-container">
+    <div className="map-modal-overlay" style={{zIndex: 'inherit'}}>
+      <div className="map-modal" style={{zIndex: 'inherit'}}>
+        <div className="map-container" style={{zIndex: 'inherit'}}>
           <MapContainer
             center={[52.205, 0.119]}
             zoom={13}
-            style={{ height: '100%', width: '100%' }}
+            style={{ height: '100%', width: '100%', zIndex: 'inherit' }}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
