@@ -20,16 +20,18 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 3000;
+  z-index: inherit;
 }
 
 .map-container {
   flex: 1;
   position: relative;
   min-height: 0; /* Prevents flex container from overflowing */
+  z-index: inherit;
 }
 
 .map-controls {
+  position: relative;
   padding: 15px;
   display: flex;
   justify-content: center;
@@ -38,6 +40,7 @@
 }
 
 .confirm-button {
+  position: relative;
   background: #4caf50;
   color: white;
   border: none;

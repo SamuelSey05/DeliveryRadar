@@ -24,8 +24,8 @@ function UploadModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="modal-overlay" style={{zIndex: 1000}}>
+      <div className="modal" style={{zIndex: "inherit"}}>
         <h3>Upload Video</h3>
         <form onSubmit={handleSubmit}>
           <label>Vehicle Type:</label>
