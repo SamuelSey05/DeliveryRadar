@@ -61,13 +61,14 @@ def processVideo(id:int, vid:str):
 
     homography_matrix, pixel_points = compute_homography_matrix(frame)
 
-    print(homography_matrix, pixel_points)
+    #print(homography_matrix, pixel_points)
 
     capture.release()
 
-    return frames_to_speed(bike_data, fps, homography_matrix, pixel_points)
-    
-def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points) -> Dict[int, np.ndarray]:
+    return (id, frames_to_speed(bike_data, fps, homography_matrix, pixel_points))
+
+
+def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points):
     speeds = {}
     
     for bike_id, frames in bikes_frames.items(): # For each bike
@@ -85,4 +86,4 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
 
-print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
+#print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
