@@ -10,7 +10,7 @@ class R(Request):
     trusted_hosts = ["cstdeliveryradar.soc.srcf.net"]
 
 
-app = Flask(__name__, static_folder="./leaflet-heatmap-comp/dist/assets", template_folder="./leaflet-heatmap-comp/dist")
+app = Flask(__name__, static_folder="./video-upload/dist/assets", template_folder="./video-upload/dist")
 app.request_class = R
 
 # Used to secure cookies.  Generate a long, random string.
