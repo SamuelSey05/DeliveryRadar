@@ -9,6 +9,9 @@ from scipy.stats import binned_statistic
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 
+def filter_contours(contours: List[np.ndarray], hierarchy: List[np.ndarray]):
+    pass
+
 def processVideo(id:int, vid:str):
 
     # TODO : move this somewhere else, don't what it to run every time the function is called
