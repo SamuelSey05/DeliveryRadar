@@ -67,18 +67,30 @@ def processVideo(id:int, vid:str):
     BIKE_ID = 1
 
     bike_data = {}
-    frame_number = 1
-
-    capture = cv2.VideoCapture(vid)
     
-    # Get video properties
+    # define colour of reference point (cones)
+    colour = np.uint8([[[232, 0, 4]]]) # orange
+    hsv_colour = cv2.cvtColor(colour, cv2.COLOR_RGB2HSV)
+
+    # define upper and lower bands for the colour range
+    lower = np.array((hsv_colour[0][0][0] - 5, 190, 190), dtype=np.uint8)
+    upper = np.array((hsv_colour[0][0][0] + 5, 255, 255), dtype=np.uint8)
+
+    reference_points = {}
+
+    # get video properties
+    capture = cv2.VideoCapture(vid)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
+
+    frame_number = 1
 
     while capture.isOpened():
         ret, frame = capture.read()
 
         if not ret:
             break
+
+        # detect bikes
 
         results = model.track(source=frame, classes=[BIKE_ID], persist=True)
 
@@ -95,8 +107,30 @@ def processVideo(id:int, vid:str):
 
         frame_number += 1
 
+        # detect reference points
+
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # convert image from original colour space to HSV
+        blur_frame = cv2.GaussianBlur(hsv_frame, (5,5), 0) # blur frame to reduce noise
+        mask = cv2.inRange(blur_frame, lower, upper) # create colour mask
+
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        filtered_contours = filter_contours(contours, hierarchy)
+
+        # continue if no reference points found in frame
+        if len(filtered_contours) == 0:
+            continue 
+
+        # get tuple of (x,y) tuples from the filtered contours
+        # increment counter of how many times that reference location has been seen
+        reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
+        reference_points[reference_index] = reference_points.get(reference_index, 0) + 1 
+
     # os.remove(vid)
 
+    # get most common reference points
+    # TODO : pass this to another function for distance calculation
+    observed_references = list(max(reference_points, key=reference_points.get))
 
     bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
 
