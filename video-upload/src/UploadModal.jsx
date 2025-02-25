@@ -4,17 +4,38 @@ import "./UploadModal.css";
 
 function UploadModal({ onClose }) {
   const [vehicleType, setVehicleType] = useState("");
-  const [time, setTime] = useState("");
+  const [year, setYear] = useState("");
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
+  const [selectedTime, setSelectedTime] = useState(""); // "HH:MM" string
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Vehicle Type:", vehicleType);
-    console.log("Time:", time);
-    console.log("Video:", video);
-    console.log("Location:", selectedLocation);
+  
+    const [hour, minute] = selectedTime.split(":").map(Number);
+  
+    const formData = {
+      location: {
+        lat: selectedLocation?.lat || 0.0,
+        lon: selectedLocation?.lng || 0.0,
+      },
+      date: {
+        year: parseInt(year, 10) || 1970,
+        month: parseInt(month, 10) || 1,
+        day: parseInt(day, 10) || 1,
+      },
+      time: {
+        hour: hour || 0,
+        minute: minute || 0,
+        second: 0, // Always default to 0
+      },
+      vehicle: vehicleType === "bicycle" ? "bike" : "scooter",
+    };
+  
+    console.log(JSON.stringify(formData, null, 2));
     onClose();
   };
 
@@ -24,25 +45,65 @@ function UploadModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay" style={{zIndex: 1000}}>
-      <div className="modal" style={{zIndex: "inherit"}}>
+    <div className="modal-overlay" style={{ zIndex: 1000 }}>
+      <div className="modal" style={{ zIndex: "inherit" }}>
         <h3>Upload Video</h3>
         <form onSubmit={handleSubmit}>
           <label>Vehicle Type:</label>
           <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} required>
             <option value="">Select...</option>
-            <option value="bicycle">Bicycle</option>
-            <option value="e-scooter">E-Scooter</option>
+            <option value="bike">Bicycle</option>
+            <option value="scooter">E-Scooter</option>
           </select>
 
+          <label>Date:</label>
+          <div className="date-inputs">
+            <input
+              type="number"
+              placeholder="YYYY"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              min="1900"
+              max="2100"
+              required
+              style={{ width: '50px' }}
+            />
+            <input
+              type="number"
+              placeholder="MM"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              min="1"
+              max="12"
+              required
+              style={{ width: '40px'}}
+            />
+            <input
+              type="number"
+              placeholder="DD"
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+              min="1"
+              max="31"
+              required
+              style={{ width: '38px'}}
+            />
+          </div>
+
           <label>Time:</label>
-          <input
-            type="text"
-            placeholder="Enter time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
+          <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} required>
+            <option value="">Select Time...</option>
+            {Array.from({ length: 48 }).map((_, index) => {
+              const hours = Math.floor(index / 2);
+              const minutes = index % 2 === 0 ? '00' : '30';
+              const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}`;
+              return (
+                <option key={formattedTime} value={formattedTime}>
+                  {formattedTime}
+                </option>
+              );
+            })}
+          </select>
 
           <label>Location:</label>
           <button
@@ -64,8 +125,12 @@ function UploadModal({ onClose }) {
           />
 
           <div className="button-container">
-            <button type="submit" className="submit-button">Submit</button>
-            <button type="button" className="close-button" onClick={onClose}>Close</button>
+            <button type="submit" className="submit-button">
+              Submit
+            </button>
+            <button type="button" className="close-button" onClick={onClose}>
+              Close
+            </button>
           </div>
         </form>
 
