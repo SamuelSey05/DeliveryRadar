@@ -9,7 +9,7 @@ function UploadModal({ onClose }) {
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
-  const [selectedTime, setSelectedTime] = useState(""); // "HH:MM" string
+  const [selectedTime, setSelectedTime] = useState(""); 
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -32,7 +32,7 @@ function UploadModal({ onClose }) {
       time: {
         hour: hour || 0,
         minute: minute || 0,
-        second: 0, // Always default to 0
+        second: 0, //default to 0
       },
       vehicle: vehicleType === "bicycle" ? "bike" : "scooter",
     };
