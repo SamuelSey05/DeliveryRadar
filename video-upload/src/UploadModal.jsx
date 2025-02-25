@@ -1,18 +1,20 @@
 import { useState } from "react";
 import MapModal from "./MapModal";
 import "./UploadModal.css";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 function UploadModal({ onClose }) {
   const [vehicleType, setVehicleType] = useState("");
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
-  const [selectedTime, setSelectedTime] = useState(""); // "HH:MM" string
+  const [selectedTime, setSelectedTime] = useState(""); 
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
   
     const [hour, minute] = selectedTime.split(":").map(Number);
@@ -30,12 +32,37 @@ function UploadModal({ onClose }) {
       time: {
         hour: hour || 0,
         minute: minute || 0,
-        second: 0, // Always default to 0
+        second: 0, //default to 0
       },
       vehicle: vehicleType === "bicycle" ? "bike" : "scooter",
     };
   
-    console.log(JSON.stringify(formData, null, 2));
+    console.log(JSON.stringify(formData, null, 2)); //print formData in inspect -> console in web browser
+
+    const zip = new JSZip();
+    zip.file("incident.json", JSON.stringify(formData, null, 2));
+    const videoExtension = video.name.split(".").pop();
+    zip.file(`upload.${videoExtension}`, video, { binary: true });
+
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", zipBlob, "submission.zip");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload ZIP file");
+      }
+
+      console.log("ZIP file successfully uploaded to server");
+    } catch (error) {
+      console.error("Error generating or uploading ZIP file:", error);
+    }
+
     onClose();
   };
 
