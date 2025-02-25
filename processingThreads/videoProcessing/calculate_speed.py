@@ -15,6 +15,7 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, apply
     - homography_matrix: 3x3 matrix for perspective transformation.
     - pixels_per_meter: Scaling factor (determined from calibration).
     - apply_homography: If True, applies homography transformation to adjust for perspective.
+
     - reference_points: List of tuples [(px1, py1), (px2, py2)] for mapping homography.
 
     Returns:
@@ -35,6 +36,7 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, apply
         """
         if reference_points is None or len(reference_points) != 2:
             raise ValueError("Reference points must contain exactly two (x, y) coordinate pairs.")
+
 
         # Convert reference points to homogeneous coordinates
         p1 = np.array([reference_points[0][0], reference_points[0][1], 1]).reshape(3, 1)

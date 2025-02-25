@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 
-
 def compute_homography_matrix(frame):
     """
     Automatically extracts reference points from video frame and computes the homography matrix.
@@ -57,7 +56,6 @@ def compute_homography_matrix(frame):
         real_world_points = [(0, 0), (2, 0), (0, 10), (2, 10)]  # Assumed lane width 2m, length 10m
 
         return np.array(pixel_points, dtype=np.float32), np.array(real_world_points, dtype=np.float32)
-
     lines = detect_lane_edges(frame)
     ref_points = extract_reference_points(lines)
 

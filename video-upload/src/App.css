@@ -1,0 +1,48 @@
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, #1a1a2e, #16213e);
+  color: white;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  width: 100vw;
+}
+
+.app-container {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 10px;
+  backdrop-filter: blur(0px);
+  width: 45vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  z-index: 500;
+}
+
+.app-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.upload-button {
+  padding: 12px 20px;
+  font-size: 18px;
+  border: none;
+  background: #3a86ff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+  height: 10vh;
+}
+
+.upload-button:hover {
+  background: #265df2;
+}
+
+.rowC{display:flex; flex-direction:row; max-width: 80%; display: flex; margin: auto; gap: 5vw}
