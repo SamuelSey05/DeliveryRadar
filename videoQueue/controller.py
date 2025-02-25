@@ -1,5 +1,5 @@
 from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec
-from queue import Queue
+from multiprocessing import Queue
 import os.path
 from zipfile import is_zipfile, ZipFile
 from fnmatch import fnmatch
@@ -7,7 +7,7 @@ from json import loads
 
 class VideoQueue():
     def __init__(self):
-        self.q = Queue()
+        self.q = Queue() # TODO Add proper multithreading
         self.storage = TempDir() ## Create a Temporary Directory for storing the submissions in
         
     def enqueue(self, submission:os.path)->str:
