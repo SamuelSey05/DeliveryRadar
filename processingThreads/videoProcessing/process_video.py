@@ -1,5 +1,3 @@
-import os
-import time
 # from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
@@ -46,9 +44,6 @@ def processVideo(id:int, vid:str):
 
         frame_number += 1
 
-    # os.remove(vid)
-
-
     bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
 
     if len(bike_data) == 0:
@@ -60,8 +55,6 @@ def processVideo(id:int, vid:str):
     _, frame = capture.read()
 
     homography_matrix, pixel_points = compute_homography_matrix(frame)
-
-    print(homography_matrix, pixel_points)
 
     capture.release()
 
@@ -80,9 +73,9 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
         # speeds[bike_id] = binned_mean.statistic
 
-        speeds[bike_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
+        speeds[bike_id] = float(max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points)))
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
 
-print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
+# print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))

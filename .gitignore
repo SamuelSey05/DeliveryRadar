@@ -1,4 +1,8 @@
 __pycache__/
 *.pyc
 *.pt
-.venv
+.venv/
+venv
+.vscode/
+test.**
+.DS_Store
