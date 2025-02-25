@@ -10,9 +10,9 @@ import os
 
 class R(Request):
     # Whitelist your SRCF and/or custom domains to access the site via proxy.
-    trusted_hosts = ["cstdeliveryradar.soc.srcf.net"]
+    trusted_hosts = ["cstdeliveryradar.soc.srcf.net", "127.0.0.1:5000"]
 
-app = Flask(__name__, static_folder="./leaflet-heatmap-comp/dist/assets", template_folder="./leaflet-heatmap-comp/dist")
+app = Flask(__name__, static_folder="./video-upload/dist/assets", template_folder="./video-upload/dist")
 app.request_class = R
 
 # Used to secure cookies.  Generate a long, random string.
