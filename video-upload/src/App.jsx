@@ -10,7 +10,7 @@ function App() {
     <div className="rowC">
     <div className="app-container dark-theme" style={{zIndex: 1000}}>
       <h1 className="app-title">Video Upload Portal</h1>
-      <button className="upload-button" onClick={() => setIsModalOpen(true)}>
+      <button className="upload-button" onClick={() => setIsModalOpen(true)} style={{height: "72px"}}>
         Upload Video
       </button>
       {isModalOpen && <UploadModal onClose={() => setIsModalOpen(false)} />}
