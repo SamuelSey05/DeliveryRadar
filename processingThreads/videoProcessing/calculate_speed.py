@@ -1,8 +1,12 @@
+import os
 # from common.vehicle_type import VehicleType
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
+import cv2
+import time
+import datetime
 import numpy as np
 
-def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, reference_points=None):
+def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, apply_homography=False, reference_points=None):
     """
     Convert pixel speed into real-world speed using optional homography correction.
 
@@ -10,6 +14,8 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, refer
     - pixels_per_sec: NumPy array of speeds in pixels per second.
     - homography_matrix: 3x3 matrix for perspective transformation.
     - pixels_per_meter: Scaling factor (determined from calibration).
+    - apply_homography: If True, applies homography transformation to adjust for perspective.
+
     - reference_points: List of tuples [(px1, py1), (px2, py2)] for mapping homography.
 
     Returns:
@@ -29,7 +35,8 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, refer
         - NumPy array of speeds in meters per second.
         """
         if reference_points is None or len(reference_points) != 2:
-            return px_per_sec / pixels_per_meter
+            raise ValueError("Reference points must contain exactly two (x, y) coordinate pairs.")
+
 
         # Convert reference points to homogeneous coordinates
         p1 = np.array([reference_points[0][0], reference_points[0][1], 1]).reshape(3, 1)
@@ -52,7 +59,7 @@ def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, refer
         # Convert pixel speed to real-world speed
         return px_per_sec / pixels_per_meter_dynamic
 
-    if homography_matrix is not None:
+    if apply_homography:
         real_speed_mps = apply_homography_correction(pixels_per_sec, homography_matrix, reference_points)
     else:
         real_speed_mps = pixels_per_sec / pixels_per_meter
