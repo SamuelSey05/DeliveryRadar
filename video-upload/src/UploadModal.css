@@ -45,17 +45,16 @@
     margin-top: 0.5vh;
     font-size: 2vh;
     font-weight: bold;
-    flex-direction: column;
-    text-align: bottom;
+    text-align: left;
     flex-grow: 0.1;
   }
   
   select,
   input {
-    padding: 0.5vh;
-    margin: 5px 0;
+    padding: 1vh;
+    margin: 0.25vh 0.25vh;
     border: none;
-    border-radius: 5px;
+    border-radius: 1vh;
     background: #1e1e1e;
     color: white;
     flex-grow: 0.1;
@@ -65,10 +64,10 @@
   button {
     padding: 0.5vh;
     border: none;
-    border-radius: 5px;
+    border-radius: 1vh;
     cursor: pointer;
     font-size: 2vh;
-    margin-top: 15px;
+    margin-top: 0.5vh;
   }
   
   .submit-button {
@@ -84,6 +83,7 @@
   
   .close-button {
     background: #ff4f4f;
+    border-radius: 1vh;
     color: white;
     flex-grow: 0.1;
     font-size: 2vh;

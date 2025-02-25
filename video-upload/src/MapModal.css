@@ -1,9 +1,9 @@
 .map-modal-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
+  bottom: 0;
   left: 0;
-  width: 258%;
-  height: 90vh;
+  width: 80vw;
   background: rgba(0, 0, 0, 1);
   display: flex;
   align-items: center;
@@ -12,9 +12,9 @@
 }
 
 .map-modal {
-  position: fixed;
-  width: 240%;
-  height: 85vh;
+  position: absolute;
+  width: 90%;
+  height: 90%;
   background: #121212;
   border-radius: 8px;
   display: flex;
