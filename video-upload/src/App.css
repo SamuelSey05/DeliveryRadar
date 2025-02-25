@@ -13,7 +13,7 @@ body {
 .app-container {
   position: relative;
   background: rgba(255, 255, 255, 0.1);
-  padding: 40px;
+  padding: 2vw;
   border-radius: 10px;
   backdrop-filter: blur(0px);
   width: 45vw;
