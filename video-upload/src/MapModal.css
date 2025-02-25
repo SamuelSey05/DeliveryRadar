@@ -2,7 +2,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 90vw;
+  width: 258%;
   height: 90vh;
   background: rgba(0, 0, 0, 1);
   display: flex;
@@ -13,7 +13,7 @@
 
 .map-modal {
   position: fixed;
-  width: 85vw;
+  width: 240%;
   height: 85vh;
   background: #121212;
   border-radius: 8px;
