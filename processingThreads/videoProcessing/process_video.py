@@ -9,8 +9,17 @@ from scipy.stats import binned_statistic
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 
-def processVideo(id:int, vid:str):
+def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
+    """
+    Process the provided video input
 
+    Args:
+        id (str): SHA256 of the submission, used as ID
+        vid (os.path): Path to the recorded video
+
+    Returns:
+        tuple[str, Dict[int,float]]: Processing ID, dict of vehicle ID to speed
+    """          
     # TODO : move this somewhere else, don't what it to run every time the function is called
     model = YOLO('yolo11n.pt')
 
