@@ -1,5 +1,5 @@
 from typing import TypedDict
-import datetime
+from datetime import datetime
 
 class LatLon(TypedDict):
     """
