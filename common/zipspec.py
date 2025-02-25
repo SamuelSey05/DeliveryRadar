@@ -1,4 +1,5 @@
 from typing import TypedDict
+from datetime import datetime
 
 from common.db_types import locationClass
 
@@ -19,3 +20,6 @@ class Incident(TypedDict):
     date:jsonDate
     time:jsonTime
     vehicle:str
+    
+def datetimeFromIncident(inc:Incident)->datetime:
+    return datetime(inc["date"]["year"], inc["date"]["month"], inc["date"]["day"], inc["time"]["hour"], inc["time"]["minute"], inc["time"]["second"])
