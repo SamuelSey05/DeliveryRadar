@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@vgrid/react-leaflet-heatmap-layer": "^4.0.3",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "react": "^18.0.0",
     "react-bootstrap": "^2.10.6",
