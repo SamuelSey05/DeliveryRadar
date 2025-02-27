@@ -6,7 +6,7 @@ from ultralytics import YOLO
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
-from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
+from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
 
@@ -93,13 +93,14 @@ def processVideo(id:int, vid:str):
     capture.set(cv2.CAP_PROP_POS_FRAMES, frame_id - 1)
     _, frame = capture.read()
 
-    homography_matrix, pixel_points = compute_homography_matrix(frame)
+
+    homography_matrix = compute_homography_matrix_cones(observed_references)
 
     #print(homography_matrix, pixel_points)
 
     capture.release()
 
-    return (id, frames_to_speed(bike_data, fps, homography_matrix, pixel_points))
+    return (id, frames_to_speed(bike_data, fps, homography_matrix, observed_references[:2]))
 
 
 def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points):
