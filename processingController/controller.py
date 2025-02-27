@@ -24,25 +24,32 @@ class Thread(TypedDict):
     procDir:TempDir
 
 class ProcessingController():
-    def __init__(self):
-        self.active = True
+    def __init__(self, ctrl:Connection):
+        self.ctrl_con = ctrl
+        self.active = True # Used for GC
         self._threads:List[Thread] = []
         self.free_threads = Queue()
         self.db_con = DBController()
         self._ret_q = Queue()
         # TODO Add smarter Thread instantiator - load balancing
         for i in range(4):
-            self.free_threads.append(i)
             self.add_thread()
         
-    def add_thread(self, num:int):
+    def add_thread(self):
+        """
+        Add a thread to the list of active threads 
+        """        
         t:Tuple[Process, Connection] = (new_thread(self._ret_q))
         self._threads.append(Thread(is_free=True, Process = t[0], con=t[1], alive=True, procDir=TempDir()))
+        self.free_threads.put(len(self._threads)-1)
     
-    def processLoop(self, con:Connection):
+    def processLoop(self):
+        """
+        Method that runs in the Scheduling Thread
+        """        
         while True:
-            if con.poll():
-                sig = con.recv()
+            if self.ctrl_con.poll():
+                sig = self.ctrl_con.recv()
                 if sig == SIG_END:
                     self.active = False
 
@@ -80,6 +87,7 @@ class ProcessingController():
                 thr['procDir'].refresh()
                 thr['is_free']=True
                 self.free_threads.put(t)
+        # TODO Cleanup of running Threads
                     
     def __del__(self):
         for thr in self._threads:
@@ -93,10 +101,25 @@ class ProcessingController():
                 
 
 def controllerThreadFun(con:Connection):
-    controller = ProcessingController()
-    controller.processLoop(con)
+    """
+    Function run in controller Thread
 
-def controller(control_con):
+    Args:
+        con (Connection): Control Connection for Processing Controller
+    """    
+    controller = ProcessingController(con)
+    controller.processLoop()
+
+def controller(control_con:Connection)->Process:
+    """
+    Build a controller Thread, returning process Handle
+
+    Args:
+        control_con (Connection): Control Connection for Thread
+
+    Returns:
+        Process: handle for process
+    """    
     p = Process(target=controllerThreadFun, args=[control_con])
     p.start()
     return p
