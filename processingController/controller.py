@@ -94,7 +94,9 @@ def controllerThreadFun(con:Connection):
     controller.processLoop(con)
 
 def controller(control_con):
-    return Process(target=controllerThreadFun, args=[control_con])
+    p = Process(target=controllerThreadFun, args=[control_con])
+    p.start()
+    return p
     
         
         
