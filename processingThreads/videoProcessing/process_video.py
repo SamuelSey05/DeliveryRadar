@@ -1,7 +1,7 @@
 from math import inf
 import cv2
 from ultralytics import YOLO
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
