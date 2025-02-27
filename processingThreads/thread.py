@@ -6,8 +6,10 @@ from multiprocessing.connection import Connection
 from typing import Dict, List, Tuple, Union
 
 from common import processingArgs, SIG_END
+
+import os.path
     
-def thread_fun(rev_con:Connection, ret_q:Queue):
+def thread_fun(con:Connection, ret_q:Queue):
     """
     Function Performed by Each processing Thread
 
@@ -17,16 +19,23 @@ def thread_fun(rev_con:Connection, ret_q:Queue):
     Returns(Down Pipe):
         Tuple[str, List[float]]: Will Send (ID, [Speeds]) back along pipe to controller
     """
-    data:Union[processingArgs, int] = rev_con.recv()
+    data:Union[processingArgs, int] = con.recv()
     while data != SIG_END:
-        ret:tuple[int, Dict[int,float]] = processVideo(data['id'], data['path'])
+        vid_id:str = data['vid_id']
+        thr_id:int = data['thr_id']
+        path:os.path = data['path']
+        ret:tuple[str, Dict[int,float]] = processVideo(vid_id, path)
         speeds:List[float] = list(ret[1].values())
-        ret_q.put((ret[0], speeds))
-        data = rev_con.recv()
+        con.send((vid_id, speeds))
+        ret_q.put(thr_id)
+        data = con.recv()
 
-def new_thread(ret_q:Queue) -> tuple[Process, Connection]:
+def new_thread(ret_q:Queue) -> tuple[Process, Connection]:   
     """
     Create a new processing Thread and Connection to it
+
+    Args:
+        ret_q (Queue): The Queue for data processed to be returned on
 
     Returns:
         tuple[Process, Connection]: Tuple of the processing Thread ID and the Pipe connection to it

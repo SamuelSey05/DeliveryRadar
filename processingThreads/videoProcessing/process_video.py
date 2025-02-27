@@ -9,7 +9,7 @@ from scipy.stats import binned_statistic
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 
-def processVideo(id:int, vid:os.path)-> tuple[str, Dict[int,float]]:
+def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
     """
     Process the provided video input
 
