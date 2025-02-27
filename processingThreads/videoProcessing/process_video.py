@@ -98,6 +98,8 @@ def processVideo(id:int, vid:str):
             if min_area > area:
                 cone_points = [p1, p2, p3]
                 min_area = area
+    else: # len(observed_references) is 2 or 3, this is expected case
+        cone_points = observed_references
 
 
     bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second

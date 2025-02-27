@@ -46,9 +46,9 @@ def filter_contours(contours: List[np.ndarray], hierarchy: List[np.ndarray]):
         if not removable:
             filtered_contours.append(i_contour)
 
-    # assume video contains either 2 or 3 cones
+    # assume video contains either >1 cone
     # cannot differentiate other objects from reference points
-    if not (len(filtered_contours) == 2 or len(filtered_contours) == 3):
+    if len(filtered_contours) < 2:
         return []
 
     return filtered_contours
