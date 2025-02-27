@@ -2,12 +2,14 @@ from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec, S
 from multiprocessing import Queue, Pipe, Process
 from multiprocessing.connection import Connection
 from queue import Empty
-import os.path
+from os.path import exists, abspath
+from os import rename
 from os import PathLike
 from zipfile import is_zipfile, ZipFile
 from fnmatch import fnmatch
 from json import loads
 from videoQueue.commands import OutCommands
+from typing import Tuple
 
 class VideoQueue():
     def __init__(self, in_q:Connection=None, out_q:Connection=None, control_con:Connection=None):
@@ -26,12 +28,12 @@ class VideoQueue():
         self.con = Connection
         self.storage = TempDir() ## Create a Temporary Directory for storing the submissions in
         
-    def enqueue(self, submission:os.path)->str:
+    def enqueue(self, submission:PathLike)->str:
         """
         Enqueues a submission
 
         Args:
-            submission (os.path): path of the submission zip to be processed
+            submission (PathLike): path of the submission zip to be processed
 
         Raises:
             FileNotFoundError: Submission zip not found
@@ -42,7 +44,7 @@ class VideoQueue():
             str: sha256 hash of the submission
         """    
         # TODO: Move Zip Verification outside of locked region
-        if os.path.exists(submission): ## Check Submission File Exists
+        if exists(submission): ## Check Submission File Exists
             if is_zipfile(submission): ## Check Submission is a ZipFile
                 files = []
                 with ZipFile(submission, "r") as f:
@@ -62,7 +64,7 @@ class VideoQueue():
                 ## Once Submission Checked for Correctness
                 fileHash = hashFile(submission)
                 try:
-                    os.rename(submission, f"{self.storage.path()}/{fileHash}.zip")
+                    rename(submission, f"{self.storage.path()}/{fileHash}.zip")
                 except OSError:
                     raise CannotMoveZip()
                 self.q.put(fileHash)
@@ -73,7 +75,7 @@ class VideoQueue():
         else:
             raise FileNotFoundError()
         
-    def dequeue(self, dir:os.path)->str:
+    def dequeue(self, dir:PathLike)->str:
         """
         Removes a submission from the video queue, moving it to a specified directory, and returning the hash of the submission
 
@@ -89,9 +91,9 @@ class VideoQueue():
         """       
         try: 
             submission = self.q.get(False)
-            if os.path.exists(f"{self.storage.path()}/{submission}.zip"):
+            if exists(f"{self.storage.path()}/{submission}.zip"):
                 try:
-                    os.rename(f"{self.storage.path()}/{submission}.zip", f"{dir}/{submission}.zip")
+                    rename(f"{self.storage.path()}/{submission}.zip", f"{dir}/{submission}.zip")
                 except OSError:
                     raise CannotMoveZip()
                 return submission
@@ -101,13 +103,19 @@ class VideoQueue():
             return "EMPTY"
         
     def monitor(self):
+        """
+        Method to monitor the input Queues and perform necessary enqueues and dequeues without blocking on empty
+        """        
+        # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while True:
+            # First check for signal from control connection
             if self.con.poll():
                 sig = self.con.recv()
                 if sig == SIG_END:
                     self.active = False
 
-            if not self.in_q.empty() and self.active:
+            # Then check for signal from enqueue
+            if self.in_q.poll() and self.active:
                 submission:PathLike = self.in_q.recv()
                 hash = ""
                 err = ""
@@ -119,24 +127,27 @@ class VideoQueue():
                     err = "FileNotFound"
                 except SubmissionError as e:
                     err = str(e)
+                # Send Result or Defunctionalised Error Back
                 self.in_q.send((hash, err))
 
-            if not self.out_q.empty() and self.active:
+            # Finally check for dequeue/isEmpty signals
+            if self.out_q.poll() and self.active:
                 command:OutCommands
                 target:PathLike
                 command, target = self.out_q.recv()
                 err = ""
+                # Defunctionalised Commands, Defunctionalise Raised Errors for return
                 if command == OutCommands.DEQUEUE:
                     hash = ""
                     try:
-                        hash = self.dequeue(submission)
+                        hash = self.dequeue(target)
                     except CannotMoveZip:
                         err = "CannotMoveZip"
                     except FileNotFoundError:
                         err = "FileNotFound"
                     self.out_q.send((hash, err))
                 elif command == OutCommands.EMPTY_QUERY:
-                    empty = self.q.empty()
+                    empty:bool = self.q.empty()
                     self.out_q.send((empty, err))
         # TODO Handle storage of submitted but not yet processed submissions on close
             
@@ -148,7 +159,7 @@ def test_enqueue(q=VideoQueue()):
         incident = zipspec.Incident(location=locationClass(lat = 52.205276, lon = 0.119167), date=zipspec.jsonDate(year=1970, month=1, day=1), time=zipspec.jsonTime(hour=0, minute=0, second=0), vehicle="Bike")
         f.writestr("incident.json", dumps(incident))
         f.writestr("upload.mp4", "test") ## TODO: Test with actual video
-    q.enqueue(os.path.abspath("test.zip"))
+    q.enqueue(abspath("test.zip"))
         
 def test_dequeue():
     q = VideoQueue()
@@ -173,7 +184,16 @@ def videoQueueThreadFun(in_int:Connection, out_int:Connection, ctrl:Connection):
     q = VideoQueue(in_int, out_int, ctrl)
     q.monitor()
 
-def videoQueue(ctrl:Connection):
+def videoQueue(ctrl:Connection)->Tuple:
+    """
+    Create a Multithreaded Video Queue
+
+    Args:
+        ctrl (Connection): Control Connection - used for Thread Controls - e.g Kill Signal
+
+    Returns:
+        Tuple: _description_
+    """    
     in_ext, in_int = Pipe()
     out_ext, out_int = Pipe()
     p = Process(target=videoQueueThreadFun, args=[in_int, out_int, ctrl])
