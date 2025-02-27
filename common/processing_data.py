@@ -3,6 +3,7 @@ import os.path
 
 class processingArgs(TypedDict):
     path:os.path
-    id:str
+    vid_id:str
+    thr_id:int
     
 SIG_END = 0
