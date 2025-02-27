@@ -177,5 +177,6 @@ def videoQueue(ctrl:Connection):
     in_ext, in_int = Pipe()
     out_ext, out_int = Pipe()
     p = Process(target=videoQueueThreadFun, args=[in_int, out_int, ctrl])
+    p.start()
     return (p, in_ext, out_ext)
     
