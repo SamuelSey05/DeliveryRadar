@@ -81,6 +81,7 @@ class ProcessingController():
     def __del__(self):
         for thr in self._threads:
             thr['con'].send(SIG_END)
+            thr['con'].close()
             
         sleep(5)
         
