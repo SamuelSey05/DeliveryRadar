@@ -22,6 +22,7 @@ class Thread(TypedDict):
 
 class ProcessingController():
     def __init__(self):
+        self.active = True
         self._threads:List[Thread] = []
         self.free_threads = Queue()
         self.db_con = DBController()
@@ -38,10 +39,12 @@ class ProcessingController():
     def processLoop(self, con:Connection):
         while True:
             if con.poll():
-                break # TODO Add safe kill
+                sig = con.recv()
+                if sig == SIG_END:
+                    self.active = False
 
             # If there is a free processing thread, and a video to process
-            if self.free_threads.empty() and not vq_empty():
+            if self.free_threads.empty() and not vq_empty() and self.active:
                 # Get #, and info of thread to use, mark as in use
                 t = self.free_threads.pop()
                 thr:Thread = self._threads[t]
@@ -88,6 +91,9 @@ class ProcessingController():
 def controllerThreadFun(con:Connection):
     controller = ProcessingController()
     controller.processLoop(con)
+
+def controller(control_con):
+    return Process(target=controllerThreadFun, args=[control_con])
     
         
         
