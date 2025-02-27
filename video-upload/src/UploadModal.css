@@ -67,7 +67,7 @@
   }
   
   button {
-    padding: 0.5vh;
+    padding: 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -114,11 +114,4 @@
   
   .location-button:hover {
     background: #45a049;
-  }
-
-  h3{
-    margin-top: 0.5vh;
-    flex-grow: 0.1;
-    font-size: 3vh;
-    width: 100%;
   }
