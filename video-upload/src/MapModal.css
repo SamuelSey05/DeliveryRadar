@@ -1,9 +1,9 @@
 .map-modal-overlay {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 80vw;
+  top: 2%;
+  bottom: 2%;
+  left: 2%;
+  right: 2%;
   background: rgba(0, 0, 0, 1);
   display: flex;
   align-items: center;

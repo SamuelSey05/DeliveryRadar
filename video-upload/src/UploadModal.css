@@ -28,7 +28,7 @@
   
   form {
     position: absolute;
-    top: 80px;
+    top: 60px;
     bottom: 15px;
     right: 15px;
     left: 15px;
@@ -40,41 +40,46 @@
     transform: scale(1);
     flex-grow: 1;
   }
+
+  h3{
+    flex-grow: 0.1;
+    font-size: 24;
+    font-weight: bold;
+    width: 100%;
+  }
   
   label {
-    margin-top: 0.5vh;
-    font-size: 2vh;
-    font-weight: bold;
+    font-size: 12;
     text-align: left;
     flex-grow: 0.1;
   }
   
   select,
   input {
-    padding: 1vh;
-    margin: 0.25vh 0.25vh;
+    padding: 5px;
+    margin: 2px;
     border: none;
-    border-radius: 1vh;
+    border-radius: 4px;
     background: #1e1e1e;
     color: white;
     flex-grow: 0.1;
-    font-size: 2vh;
+    font-size: 8;
   }
   
   button {
-    padding: 0.5vh;
+    padding: 10px;
     border: none;
-    border-radius: 1vh;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 2vh;
-    margin-top: 0.5vh;
+    font-size: 8;
+    margin-top: 5px;
   }
   
   .submit-button {
     background: #3a86ff;
     color: white;
     flex-grow: 0.1;
-    font-size: 2vh;
+    font-size: 8;
   }
   
   .submit-button:hover {
@@ -83,10 +88,10 @@
   
   .close-button {
     background: #ff4f4f;
-    border-radius: 1vh;
+    border-radius: 4px;
     color: white;
     flex-grow: 0.1;
-    font-size: 2vh;
+    font-size: 8;
   }
   
   .close-button:hover {
@@ -102,18 +107,11 @@
     background: #4caf50;
     color: white;
     width: 100%;
-    padding: 0.5vh;
+    padding: 2px;
     margin: 5px 0;
     flex-grow: 0.1;
   }
   
   .location-button:hover {
     background: #45a049;
-  }
-
-  h3{
-    margin-top: 0.5vh;
-    flex-grow: 0.1;
-    font-size: 3vh;
-    width: 100%;
   }

@@ -1,29 +1,76 @@
+@media(orientation: portrait){
+  body {
+      position: absolute;
+      padding: 2px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1a1a2e, #16213e);
+      color: white;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: auto;
+      height: 1200px;
+      width: 400px;
+      min-width: 100%;
+    }
+  }
+
+@media(orientation: landscape){
 body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(to right, #1a1a2e, #16213e);
-  color: white;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: auto;
-  width: 100vw;
+    position: absolute;
+    padding: 2px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #1a1a2e, #16213e);
+    color: white;
+    text-align: center;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin: auto;
+    height: 480px;
+    min-height: 100%;
+    width: 1200px;
+    min-width: 100%;
+  }
 }
 
+.rowC{position: absolute; top: 0; right: 0; display:flex; flex-direction:row; width: 1200px; height: 480px; margin: auto; gap: 35px}
+
+.columnC{position: absolute; top: 0; right: 0; display:flex; flex-direction:column; height: 100%; width: 400px; margin: auto; gap: 60px}
+
+@media (orientation: landscape) {
 .app-container {
-  position: relative;
+  position: absolute;
   background: rgba(255, 255, 255, 0.1);
   padding: 2vw;
   border-radius: 10px;
-  backdrop-filter: blur(0px);
-  width: 45vw;
-  height: 80vh;
+  top: 5%;
+  bottom: 5%;
   display: flex;
   flex-direction: column;
   align-items: center;
   flex: auto;
   z-index: 500;
 }
+}
+
+@media (orientation: portrait) {
+  .app-container {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2vw;
+    border-radius: 10px;
+    left: 5%;
+    right: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: auto;
+    z-index: 500;
+  }
+  }
 
 .app-title {
   font-size: 24px;
@@ -44,6 +91,3 @@ body {
 .upload-button:hover {
   background: #265df2;
 }
-
-.rowC{display:flex; flex-direction:row; max-width: 80%; display: flex; margin: auto; gap: 5vw}
-
