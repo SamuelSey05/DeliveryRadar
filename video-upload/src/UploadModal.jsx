@@ -2,7 +2,6 @@ import { useState } from "react";
 import MapModal from "./MapModal";
 import "./UploadModal.css";
 import JSZip from "jszip";
-import { saveAs } from "file-saver";
 
 function UploadModal({ onClose }) {
   const [vehicleType, setVehicleType] = useState("");
@@ -21,8 +20,8 @@ function UploadModal({ onClose }) {
   
     const formData = {
       location: {
-        lat: selectedLocation?.lat || 0.0,
-        lon: selectedLocation?.lng || 0.0,
+        lat: parseFloat((selectedLocation?.lat || 0.0).toFixed(6)),
+        lon: parseFloat((selectedLocation?.lng || 0.0).toFixed(6)),
       },
       date: {
         year: parseInt(year, 10) || 1970,
@@ -34,7 +33,7 @@ function UploadModal({ onClose }) {
         minute: minute || 0,
         second: 0, //default to 0
       },
-      vehicle: vehicleType === "bicycle" ? "bike" : "scooter",
+      vehicle: vehicleType,
     };
   
     console.log(JSON.stringify(formData, null, 2)); //print formData in inspect -> console in web browser
@@ -49,18 +48,22 @@ function UploadModal({ onClose }) {
       const formDataToSend = new FormData();
       formDataToSend.append("file", zipBlob, "submission.zip");
 
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/upload", {
         method: "POST",
         body: formDataToSend,
       });
+
+      const jsonResponse = await response.json()
+      console.log("Server response:", jsonResponse)
 
       if (!response.ok) {
         throw new Error("Failed to upload ZIP file");
       }
 
-      console.log("ZIP file successfully uploaded to server");
+      //alert("Upload successful - line 62 in jsx")
     } catch (error) {
       console.error("Error generating or uploading ZIP file:", error);
+      //alert("Upload failed - line 65 in jsx")
     }
 
     onClose();
@@ -139,7 +142,7 @@ function UploadModal({ onClose }) {
             onClick={() => setIsMapOpen(true)}
           >
             {selectedLocation
-              ? `Selected: ${selectedLocation.lat.toFixed(5)}, ${selectedLocation.lng.toFixed(5)}`
+              ? "Location Selected" 
               : "Select Location"}
           </button>
 
