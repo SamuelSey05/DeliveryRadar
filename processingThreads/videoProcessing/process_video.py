@@ -1,11 +1,10 @@
-import os
-import time
-# from common.vehicle_type import VehicleType
+from math import inf
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
+from itertools import combinations
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
@@ -79,9 +78,27 @@ def processVideo(id:int, vid:str):
 
     # os.remove(vid)
 
+
     # get most common reference points
     # TODO : pass this to another function for distance calculation
     observed_references = list(max(reference_points, key=reference_points.get))
+
+    if len(observed_references) < 2 or len(observed_references) > 5:
+        return {}
+    elif len(observed_references) > 3:
+        #Only take the 3 points that are the most colinear, which will be the 3 points for the cones
+        def getArea(p1, p2, p3):
+            # Find area of triangle between 3 points
+            return 0.5 * abs(p1[0] * (p2[1] * p3[1]) + p2[0](p3[1] - p1[1]) + p3[0](p1[1] - p2[1]))
+        
+        min_area = inf
+        cone_points = []
+        for p1, p2, p3 in combinations(observed_references, 3):
+            area = getArea(p1, p2, p3)
+            if min_area > area:
+                cone_points = [p1, p2, p3]
+                min_area = area
+
 
     bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
 
@@ -94,13 +111,13 @@ def processVideo(id:int, vid:str):
     _, frame = capture.read()
 
 
-    homography_matrix = compute_homography_matrix_cones(observed_references)
+    homography_matrix = compute_homography_matrix_cones(cone_points)
 
     #print(homography_matrix, pixel_points)
 
     capture.release()
 
-    return (id, frames_to_speed(bike_data, fps, homography_matrix, observed_references[:2]))
+    return (id, frames_to_speed(bike_data, fps, homography_matrix, cone_points[:2]))
 
 
 def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points):
@@ -121,4 +138,4 @@ def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float,
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
 
 
-#print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
+print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
