@@ -1,4 +1,3 @@
-# from common.vehicle_type import VehicleType
 import cv2
 from ultralytics import YOLO
 from typing import List, Tuple, Dict
@@ -76,6 +75,3 @@ def frames_to_speed(bikes_frames: Dict[int, List[Tuple[int, float, float, float,
         speeds[bike_id] = float(max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points)))
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
-
-
-# print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
