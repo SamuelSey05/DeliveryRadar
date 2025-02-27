@@ -4,7 +4,7 @@ from flask import Flask, Request, request, url_for, render_template, json
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
 from videoQueue import upload
-from common import TempDir, prepDBRows
+from common import TempDir, prepDBRows, DBConnectionFailure
 from database import getIncidents
 
 import os
@@ -49,7 +49,10 @@ def upload_file():
         
 @app.route("/heatmap-data", methods = ['GET'])
 def heatmap_data():
-    data = getIncidents()
+    try:
+        data = getIncidents()
+    except DBConnectionFailure:
+        data = []
     response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
     return response
 

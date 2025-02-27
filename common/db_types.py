@@ -54,3 +54,9 @@ def prepDBRows(rows:List[DBRow])->List[Dict]:
     for row in res:
         row["time"] = row["time"].isoformat()
     return res
+
+class DBConnectionFailure(Exception):
+    """
+    Exception to be thrown if the DataBase connection Fails
+    """    
+    pass
