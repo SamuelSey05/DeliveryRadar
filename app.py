@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from flask import Flask, Request, request, url_for, render_template
+from flask import Flask, Request, request, url_for, render_template, json
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
 from videoQueue import upload
-from common import TempDir
+from common import TempDir, prepDBRows
+from database import getIncidents
 
 import os
 
@@ -45,8 +46,22 @@ def upload_file():
             return {"message": "File uploaded successfully"}, 200
         except Exception as e:
             return {"error": str(e)}, 500
+        
+@app.route("/heatmap-data", methods = ['GET'])
+def heatmap_data():
+    data = getIncidents()
+    response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
+    return response
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
     return render_template("index.html")
+
+# TODO Add 404 page
+# # app name 
+# @app.errorhandler(404) 
+# # inbuilt function which takes error as parameter 
+# def not_found(e): 
+# # defining function 
+#   return render_template("404.html") 
