@@ -39,12 +39,8 @@ MarkupSafe==3.0.2
 matplotlib==3.9.2
 mpmath==1.3.0
 multidict==6.1.0
-mysql-connector-python==8.0.33
 networkx==3.3
-numpy==1.26.4
 oauthlib==3.2.2
-opencv @ file:///build/source/modules/python/package/dist/opencv-4.9.0-py3-none-any.whl#sha256=7f0d9928891586ce0a59ba6146ae9970d0ee931dd931b52da9088a18d88a120f
-opencv-python==4.9.0
 packaging==24.1
 pandas==2.2.3
 paramiko==3.5.0
@@ -86,3 +82,6 @@ ultralytics-thop==2.0.13
 urllib3==2.2.3
 Werkzeug==3.0.6
 yarl==1.13.1
+mysql-connector-python==9.2.0
+numpy==2.2.3
+opencv-python==4.11.0.86

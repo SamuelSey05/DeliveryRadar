@@ -154,7 +154,7 @@ class DBController:
             row = cursor.fetchone()
             while row is not None:
                 print( row )
-                tmp = DBRow(id = row[0], speed=row[1], time=row[2], location=load_location(row[3]))
+                tmp = DBRow(id = row[0].decode("ascii"), speed=row[1], time=row[2], location=load_location(row[3])) 
                 print(tmp)
                 data.append(tmp)
                 row = cursor.fetchone()
