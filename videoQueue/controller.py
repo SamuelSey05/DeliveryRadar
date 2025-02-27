@@ -1,13 +1,29 @@
-from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec
-from multiprocessing import Queue
+from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec, SIG_END
+from multiprocessing import Queue, Pipe, Process
+from multiprocessing.connection import Connection
+from queue import Empty
 import os.path
+from os import PathLike
 from zipfile import is_zipfile, ZipFile
 from fnmatch import fnmatch
 from json import loads
+from videoQueue.commands import OutCommands
 
 class VideoQueue():
-    def __init__(self):
-        self.q = Queue() # TODO Add proper multithreading
+    def __init__(self, in_q:Connection=None, out_q:Connection=None, control_con:Connection=None):
+        """
+        Create a Video Queue
+
+        Args:
+            in_q (Connection, optional): Input Connection for multithreading. Defaults to None.
+            out_q (Connection, optional): Output Connection for multithreading. Defaults to None.
+            control_con (Connection, optional): _description_. Defaults to None.
+        """      
+        self.active = True  
+        self.q = Queue()
+        self.in_q = in_q
+        self.out_q = out_q
+        self.con = Connection
         self.storage = TempDir() ## Create a Temporary Directory for storing the submissions in
         
     def enqueue(self, submission:os.path)->str:
@@ -25,6 +41,7 @@ class VideoQueue():
         Returns:
             str: sha256 hash of the submission
         """    
+        # TODO: Move Zip Verification outside of locked region
         if os.path.exists(submission): ## Check Submission File Exists
             if is_zipfile(submission): ## Check Submission is a ZipFile
                 files = []
@@ -69,16 +86,60 @@ class VideoQueue():
 
         Returns:
             str: sha256 hash of the submission, used as it's ID
-        """        
-        submission = self.q.get()
-        if os.path.exists(f"{self.storage.path()}/{submission}.zip"):
-            try:
-                os.rename(f"{self.storage.path()}/{submission}.zip", f"{dir}/{submission}.zip")
-            except OSError:
-                raise CannotMoveZip()
-            return submission
-        else:
-            raise FileNotFoundError()
+        """       
+        try: 
+            submission = self.q.get(False)
+            if os.path.exists(f"{self.storage.path()}/{submission}.zip"):
+                try:
+                    os.rename(f"{self.storage.path()}/{submission}.zip", f"{dir}/{submission}.zip")
+                except OSError:
+                    raise CannotMoveZip()
+                return submission
+            else:
+                raise FileNotFoundError()
+        except Empty:
+            return "EMPTY"
+        
+    def monitor(self):
+        while True:
+            if self.con.poll():
+                sig = self.con.recv()
+                if sig == SIG_END:
+                    self.active = False
+
+            if not self.in_q.empty() and self.active:
+                submission:PathLike = self.in_q.recv()
+                hash = ""
+                err = ""
+                try:
+                    hash = self.enqueue(submission)
+                except CannotMoveZip:
+                    err = "CannotMoveZip"
+                except FileNotFoundError:
+                    err = "FileNotFound"
+                except SubmissionError as e:
+                    err = str(e)
+                self.in_q.send((hash, err))
+
+            if not self.out_q.empty() and self.active:
+                command:OutCommands
+                target:PathLike
+                command, target = self.out_q.recv()
+                err = ""
+                if command == OutCommands.DEQUEUE:
+                    hash = ""
+                    try:
+                        hash = self.dequeue(submission)
+                    except CannotMoveZip:
+                        err = "CannotMoveZip"
+                    except FileNotFoundError:
+                        err = "FileNotFound"
+                    self.out_q.send((hash, err))
+                elif command == OutCommands.EMPTY_QUERY:
+                    empty = self.q.empty()
+                    self.out_q.send((empty, err))
+        # TODO Handle storage of submitted but not yet processed submissions on close
+            
         
 def test_enqueue(q=VideoQueue()):
     from common import locationClass
@@ -99,3 +160,22 @@ def test_dequeue():
 
 if __name__=="__main__":
     VideoQueue.test_enqueue()
+
+def videoQueueThreadFun(in_int:Connection, out_int:Connection, ctrl:Connection):
+    """
+    Run by the Video Queue Thread
+
+    Args:
+        in_int (Connection): Input Connection - for Enqueue commands
+        out_int (Connection): Output Connection - for Dequeue and empty commands
+        ctrl (Connection): _description_
+    """    
+    q = VideoQueue(in_int, out_int, ctrl)
+    q.monitor()
+
+def videoQueue(ctrl:Connection):
+    in_ext, in_int = Pipe()
+    out_ext, out_int = Pipe()
+    p = Process(target=videoQueueThreadFun, args=[in_int, out_int, ctrl])
+    return (p, in_ext, out_ext)
+    
