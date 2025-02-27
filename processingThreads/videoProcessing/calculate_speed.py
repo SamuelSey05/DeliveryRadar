@@ -1,16 +1,21 @@
 # from common.vehicle_type import VehicleType
-from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix
 import numpy as np
 
-def compute_speed(pixels_per_sec, homography_matrix, pixels_per_meter=200, reference_points=None):
+
+def compute_speed(
+        pixels_per_sec: np.darray, 
+        homography_matrix: np.darray | None, 
+        pixels_per_meter: float = 200, 
+        reference_points: list[tuple[float, float]] | None = None
+        ) -> np.darray:
     """
-    Convert pixel speed into real-world speed using optional homography correction.
+    Convert pixel speed into real-world speed using homography correction.
 
     Parameters:
     - pixels_per_sec: NumPy array of speeds in pixels per second.
-    - homography_matrix: 3x3 matrix for perspective transformation.
-    - pixels_per_meter: Scaling factor (determined from calibration).
-    - reference_points: List of tuples [(px1, py1), (px2, py2)] for mapping homography.
+    - homography_matrix: 3x3 matrix for perspective transformation, None if unavailable.
+    - pixels_per_meter: Scaling factor (determined from calibration) if homography is not applied.
+    - reference_points: List of tuples [(px1, py1), (px2, py2)] in pixel coordinates for mapping homography.
 
     Returns:
     - speed_kph: NumPy array of speeds in kilometers per hour (km/h).
