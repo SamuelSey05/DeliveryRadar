@@ -14,6 +14,9 @@ from datetime import datetime
 import os.path, os
 
 class Thread(TypedDict):
+    """
+    Object for storing associated information managed for each processing thread
+    """    
     is_free:bool
     p_handle:Process
     con:Connection

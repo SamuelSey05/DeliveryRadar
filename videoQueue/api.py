@@ -34,6 +34,7 @@ def upload(loc:os.path) -> str:
     if err == "":
         return hash
     else:
+        # Refunctionalise Errors
         if err == "CannotMoveZip":
             raise CannotMoveZip()
         elif err == "FileNotFound":
@@ -62,12 +63,22 @@ def dequeue(target_dir:os.path) -> str:
     if err == "":
         return hash
     else:
+        # Refuctionalise Errors
         if err == "CannotMoveZip":
             raise CannotMoveZip()
         elif err == "FileNotFound":
             raise FileNotFoundError()
 
 def vq_empty()->bool:
+    """
+    Test if the Video Queue is empty
+
+    Raises:
+        Exception: Any exceptions raised in the VQ Thread are Defunctionalised and Returned, this should never be raised as per initial implementation, but is added for future-proofing
+
+    Returns:
+        bool: True=>Empty; False=>Has Items
+    """    
     _out_l.acquire()
     _out_con.send((OutCommands.EMPTY_QUERY, ""))
     res, err = _out_con.recv()
@@ -75,4 +86,4 @@ def vq_empty()->bool:
     if err == "":
         return res
     else:
-        raise BrokenPipeError()
+        raise Exception()
