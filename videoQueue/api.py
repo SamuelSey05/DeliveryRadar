@@ -1,7 +1,16 @@
 import os.path
-from videoQueue.controller import VideoQueue
+from videoQueue.controller import videoQueue
+from multiprocessing import Lock, Process
+from multiprocessing.connection import Connection
+from common import CannotMoveZip, SubmissionError
+from videoQueue.commands import OutCommands
 
-_controller = VideoQueue()
+_in_con:Connection
+_out_con:Connection
+_p_handle:Process
+_p_handle, _in_con, _out_con = videoQueue()
+_in_l = Lock() # Lock for in_con
+_out_l = Lock() # Lock for out_con
 
 def upload(loc:os.path) -> str:
     """
@@ -17,8 +26,20 @@ def upload(loc:os.path) -> str:
         
     Returns:
         str: sha256 hash of the submission
-    """    
-    _controller.enqueue(loc)
+    """
+    _in_l.acquire()
+    _in_con.send(loc)
+    hash, err = _in_con.recv()
+    _in_l.release()
+    if err == "":
+        return hash
+    else:
+        if err == "CannotMoveZip":
+            raise CannotMoveZip()
+        elif err == "FileNotFound":
+            raise FileNotFoundError()
+        else:
+            raise SubmissionError(err)
 
 def dequeue(target_dir:os.path) -> str:
     """
@@ -33,5 +54,25 @@ def dequeue(target_dir:os.path) -> str:
 
     Returns:
         str: sha256 hash of the submission removed, used as ID
-    """    
-    return _controller.dequeue(target_dir)
+    """
+    _out_l.acquire()
+    _out_con.send((OutCommands.DEQUEUE, target_dir))
+    hash, err = _out_con.recv()
+    _out_l.release()
+    if err == "":
+        return hash
+    else:
+        if err == "CannotMoveZip":
+            raise CannotMoveZip()
+        elif err == "FileNotFound":
+            raise FileNotFoundError()
+
+def vq_empty()->bool:
+    _out_l.acquire()
+    _out_con.send((OutCommands.EMPTY_QUERY, ""))
+    res, err = _out_con.recv()
+    _out_l.release()
+    if err == "":
+        return res
+    else:
+        raise BrokenPipeError()
