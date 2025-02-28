@@ -1,6 +1,7 @@
 from math import inf
 import cv2
-from ultralytics import YOLO
+from inference_sdk import InferenceHTTPClient
+from deep_sort_realtime.deepsort_tracker import DeepSort
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
@@ -9,14 +10,22 @@ from processingThreads.videoProcessing.calculate_homography import compute_homog
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
 
+def get_key(filename):
+    try:
+        with open(filename, "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        print(f"{filename} file not found")
+
 def processVideo(id:int, vid:str):
-    # TODO : potentially move this somewhere else
-    model = YOLO('yolo11n.pt')
+    CLIENT = InferenceHTTPClient(
+        api_url="https://detect.roboflow.com",
+        api_key=get_key("apikey")
+    )
 
-    # class ID of 'bicycle' in the model
-    BIKE_ID = 1
-
-    bike_data = {}
+    classes = ["Scooter-Rider", "bikerider"]
+    data = {}
+    reference_points = {}
     
     # define colour of reference point (cones)
     colour = np.uint8([[[232, 0, 4]]]) # orange
@@ -26,11 +35,12 @@ def processVideo(id:int, vid:str):
     lower = np.array((hsv_colour[0][0][0] - 5, 190, 190), dtype=np.uint8)
     upper = np.array((hsv_colour[0][0][0] + 5, 255, 255), dtype=np.uint8)
 
-    reference_points = {}
-
     # get video properties
     capture = cv2.VideoCapture(vid)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
+
+    # define DeepSort tracker for object tracking across frames
+    tracker = DeepSort()
 
     frame_number = 1
 
@@ -40,20 +50,50 @@ def processVideo(id:int, vid:str):
         if not ret:
             break
 
-        # detect bikes
+        # detect objects
 
-        results = model.track(source=frame, classes=[BIKE_ID], persist=True)
+        results = CLIENT.infer(frame, model_id="bikes-ped-scooters/4")
 
-        boxes = results[0].boxes.xywh.tolist()
-        track_ids = results[0].boxes.id.int().tolist() if results[0].boxes.id is not None else []
+        predictions = results['predictions']
+        objects = []
 
-        for box, id in zip(boxes, track_ids):
-            x, y, w, h = box
+        for p in predictions:
+            w, h = p["width"], p["height"]
+            x, y = p["x"] - w/2, p["y"] - h/2 # (x, y) are top left bounding box coords
 
-            if bike_data.get(id) is None:
-                bike_data[id] = []
-            
-            bike_data[id].append((frame_number, x, y, w, h))
+            label = p['class']
+            confidence = p['confidence']
+
+            # ignore pedestrians
+            if label in classes:
+                objects.append(([x, y, w, h], confidence, label))
+
+        # track objects
+
+        tracked_objects = tracker.update_tracks(objects, frame=frame)
+
+        for obj in tracked_objects:
+            if not obj.is_confirmed():
+                continue
+
+            x1, y1, x2, y2 = obj.to_ltrb()
+            x, y, w, h = x1, y1, x2 - x1, y2 - y1
+
+            if (x < 0 or y < 0):
+                continue
+
+            tracked_id = obj.track_id
+            label = obj.det_class
+
+            # UNCOMMENT FOR VISUAL TESTING
+            # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            # cv2.putText(frame, f'ID {track_id} CLASS {label}', (int(x), int(y) - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            data[tracked_id] = data.get(tracked_id, []).append((frame_number, x, y, w, h))
+
+        # UNCOMMENT FOR VISUAL TESTING
+        # cv2.imshow("Test", frame)
 
         frame_number += 1
 
@@ -80,7 +120,6 @@ def processVideo(id:int, vid:str):
 
 
     # get most common reference points
-    # TODO : pass this to another function for distance calculation
     observed_references = list(max(reference_points, key=reference_points.get))
 
     if len(observed_references) < 2 or len(observed_references) > 5:
@@ -102,16 +141,10 @@ def processVideo(id:int, vid:str):
         cone_points = observed_references
 
 
-    bike_data = {bike_id: frames for bike_id, frames in bike_data.items() if len(frames) >= fps} # Filter out bikes that aren't in for at least 1 second
+    data = {obj_id: frames for obj_id, frames in data.items() if len(frames) >= fps} # Filter out detected objects that aren't in for at least 1 second
 
-    if len(bike_data) == 0:
+    if len(data) == 0:
         return {}
-    
-    frame_id = list(bike_data.values())[0][0][0]
-
-    capture.set(cv2.CAP_PROP_POS_FRAMES, frame_id - 1)
-    _, frame = capture.read()
-
 
     homography_matrix = compute_homography_matrix_cones(cone_points)
 
@@ -119,13 +152,13 @@ def processVideo(id:int, vid:str):
 
     capture.release()
 
-    return (id, frames_to_speed(bike_data, fps, homography_matrix, cone_points[:2]))
+    return (id, frames_to_speed(data, fps, homography_matrix, cone_points[:2]))
 
 
-def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points):
+def frames_to_speed(frames: dict[int, List[Tuple[int, float, float, float, float]]], fps: int, homography_matrix, pixel_points):
     speeds = {}
     
-    for bike_id, frames in bikes_frames.items(): # For each bike
+    for obj_id, frames in frames.items(): # For each detected object
         frames_array = np.array(frames)
         midpoints = frames_array[:, 1:3] + frames_array[:, 3:5] / 2  # 2D array for x,y coordinates of midpoints
         frame_numbers = frames_array[:, 0]
@@ -133,11 +166,11 @@ def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float,
 
         diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
-        # speeds[bike_id] = binned_mean.statistic
+        # speeds[obj_id] = binned_mean.statistic
 
-        speeds[bike_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
+        speeds[obj_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
 
-    return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
+    return speeds # Return average speed in pixels per second for each second (group of fps frames) for each detected object
 
 
 print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
