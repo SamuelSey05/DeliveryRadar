@@ -4,6 +4,7 @@ from flask import Flask, Request, request, url_for, render_template, json
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
 from videoQueue import upload
+from processingController import controller as processor
 from common import TempDir, prepDBRows, DBConnectionFailure
 from database import getIncidents
 
