@@ -19,7 +19,7 @@ class VideoQueue():
         Args:
             in_q (Connection, optional): Input Connection for multithreading. Defaults to None.
             out_q (Connection, optional): Output Connection for multithreading. Defaults to None.
-            control_con (Connection, optional): _description_. Defaults to None.
+            control_con (Connection, optional): Control Connection. Defaults to None.
         """      
         self.active = True  
         self.q = Queue()
@@ -109,7 +109,7 @@ class VideoQueue():
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while True:
             # First check for signal from control connection
-            if self.con.poll():
+            if (self.con).poll():
                 sig = self.con.recv()
                 if sig == SIG_END:
                     self.active = False
