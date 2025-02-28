@@ -3,70 +3,84 @@
 from flask import Flask, Request, request, url_for, render_template, json
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
-from videoQueue import upload
-from processingController import controller as processor
-from common import TempDir, prepDBRows, DBConnectionFailure
+from videoQueue import upload, setup as vq_setup
+from multiprocessing import Pipe
+from processingController import controller as proc_setup
+from common import TempDir, prepDBRows, DBConnectionFailure, SIG_END
 from database import getIncidents
 
 import os
 
-class R(Request):
-    # Whitelist your SRCF and/or custom domains to access the site via proxy.
-    trusted_hosts = ["cstdeliveryradar.soc.srcf.net", "127.0.0.1:5000"]
+# Setup Processing and Video Queue with control channels
+vq_ctrl, vq_int_con = Pipe()
+vq_setup(vq_int_con)
+proc_ctrl, proc_int_con = Pipe()
+proc_setup(proc_int_con)
 
-app = Flask(__name__, static_folder="./video-upload/dist/assets", template_folder="./video-upload/dist")
-app.request_class = R
+try:
+    class R(Request):
+        # Whitelist your SRCF and/or custom domains to access the site via proxy.
+        trusted_hosts = ["cstdeliveryradar.soc.srcf.net", "127.0.0.1:5000"]
 
-# Used to secure cookies.  Generate a long, random string.
-# Example key generated using `os.urandom(32)`:
-# app.secret_key = ("\x96\xb4\x14\x8c\x71\xec\x27\x0b\x10\xdd\x66\xa6\xf1\x00"
-# 		    "\xad\xd2\x85\xa1\xe5\x85\x60\x6a\x04\x43\xf4\xf3\xad\x24")
-## app.secret_key = SECRET_KEY # TODO: Secrets.py
+    app = Flask(__name__, static_folder="./video-upload/dist/assets", template_folder="./video-upload/dist")
+    app.request_class = R
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    # Used to secure cookies.  Generate a long, random string.
+    # Example key generated using `os.urandom(32)`:
+    # app.secret_key = ("\x96\xb4\x14\x8c\x71\xec\x27\x0b\x10\xdd\x66\xa6\xf1\x00"
+    # 		    "\xad\xd2\x85\xa1\xe5\x85\x60\x6a\x04\x43\xf4\xf3\xad\x24")
+    ## app.secret_key = SECRET_KEY # TODO: Secrets.py
 
-@app.route("/upload", methods = ['POST'])
-def upload_file():
-    
-    if "file" not in request.files:
-        return {"error": "No file part"}, 400
-    
-    file = request.files["file"]
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
-    if file.filename == "":
-        return {"error": "No selected file"}, 400
-
-    with TempDir() as tmp:
-        filename = file.filename
-        file_path = os.path.join(tmp.path(), filename)
-        file.save(file_path)  # save the uploaded file in the temporary directory
-        try:
-            upload(file_path)  # pass the file path to the upload function
-            return {"message": "File uploaded successfully"}, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
+    @app.route("/api/upload", methods = ['POST'])
+    def upload_file():
         
-@app.route("/heatmap-data", methods = ['GET'])
-def heatmap_data():
-    try:
-        data = getIncidents()
-    except DBConnectionFailure:
-        data = []
-    response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+        if "file" not in request.files:
+            return {"error": "No file part"}, 400
+        
+        file = request.files["file"]
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    return render_template("index.html")
+        if file.filename == "":
+            return {"error": "No selected file"}, 400
 
-# TODO Add 404 page
-# # app name 
-# @app.errorhandler(404) 
-# # inbuilt function which takes error as parameter 
-# def not_found(e): 
-# # defining function 
-#   return render_template("404.html") 
+        with TempDir() as tmp:
+            filename = file.filename
+            file_path = os.path.join(tmp.path(), filename)
+            file.save(file_path)  # save the uploaded file in the temporary directory
+            try:
+                upload(file_path)  # pass the file path to the upload function
+                return {"message": "File uploaded successfully"}, 200
+            except Exception as e:
+                return {"error": str(e)}, 500
+            
+    @app.route("/heatmap-data", methods = ['GET'])
+    def heatmap_data():
+        try:
+            data = getIncidents()
+        except DBConnectionFailure:
+            data = []
+        response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def catch_all(path):
+        return render_template("index.html")
+
+
+
+    # TODO Add 404 page
+    # # app name 
+    # @app.errorhandler(404) 
+    # # inbuilt function which takes error as parameter 
+    # def not_found(e): 
+    # # defining function 
+    #   return render_template("404.html") 
+
+finally:
+    vq_ctrl.send(SIG_END)
+    proc_ctrl.send(SIG_END)
