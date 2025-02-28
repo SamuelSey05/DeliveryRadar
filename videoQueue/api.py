@@ -4,13 +4,21 @@ from multiprocessing import Lock, Process
 from multiprocessing.connection import Connection
 from common import CannotMoveZip, SubmissionError
 from videoQueue.commands import OutCommands
+from typing import Type
 
-_in_con:Connection
-_out_con:Connection
-_p_handle:Process
-_p_handle, _in_con, _out_con = videoQueue()
-_in_l = Lock() # Lock for in_con
-_out_l = Lock() # Lock for out_con
+class QueueWrapper():
+    _in_con:Connection
+    _out_con:Connection
+    _p_handle:Process
+    _in_l:Type[Lock] # type: ignore
+    _out_l:Type[Lock] # type: ignore
+
+    def setup(ctrl):
+        _p_handle, _in_con, _out_con = videoQueue(ctrl)
+        _in_l = Lock() # Lock for in_con
+        _out_l = Lock() # Lock for out_con
+
+setup = QueueWrapper.setup
 
 def upload(loc:os.path) -> str:
     """
@@ -27,10 +35,10 @@ def upload(loc:os.path) -> str:
     Returns:
         str: sha256 hash of the submission
     """
-    _in_l.acquire()
-    _in_con.send(loc)
-    hash, err = _in_con.recv()
-    _in_l.release()
+    QueueWrapper._in_l.acquire()
+    QueueWrapper._in_con.send(loc)
+    hash, err = QueueWrapper._in_con.recv()
+    QueueWrapper._in_l.release()
     if err == "":
         return hash
     else:
@@ -56,10 +64,10 @@ def dequeue(target_dir:os.path) -> str:
     Returns:
         str: sha256 hash of the submission removed, used as ID
     """
-    _out_l.acquire()
-    _out_con.send((OutCommands.DEQUEUE, target_dir))
-    hash, err = _out_con.recv()
-    _out_l.release()
+    QueueWrapper._out_l.acquire()
+    QueueWrapper._out_con.send((OutCommands.DEQUEUE, target_dir))
+    hash, err = QueueWrapper._out_con.recv()
+    QueueWrapper._out_l.release()
     if err == "":
         return hash
     else:
@@ -79,10 +87,10 @@ def vq_empty()->bool:
     Returns:
         bool: True=>Empty; False=>Has Items
     """    
-    _out_l.acquire()
-    _out_con.send((OutCommands.EMPTY_QUERY, ""))
-    res, err = _out_con.recv()
-    _out_l.release()
+    QueueWrapper._out_l.acquire()
+    QueueWrapper._out_con.send((OutCommands.EMPTY_QUERY, ""))
+    res, err = QueueWrapper._out_con.recv()
+    QueueWrapper._out_l.release()
     if err == "":
         return res
     else:
