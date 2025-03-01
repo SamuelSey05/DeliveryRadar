@@ -1,4 +1,7 @@
 from os import PathLike
+from sys import stderr
+from random import random
 
 def processVideo(id:int, path:PathLike):
-    return (id, {0:20.1})
+    print (f"Thread {id}: {path}", stderr)
+    return (id, {0:15*random()})
