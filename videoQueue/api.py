@@ -14,9 +14,9 @@ class QueueWrapper():
     _out_l:Type[Lock] # type: ignore
 
     def setup(ctrl):
-        _p_handle, _in_con, _out_con = videoQueue(ctrl)
-        _in_l = Lock() # Lock for in_con
-        _out_l = Lock() # Lock for out_con
+        QueueWrapper._p_handle, QueueWrapper._in_con, QueueWrapper._out_con = videoQueue(ctrl)
+        QueueWrapper._in_l = Lock() # Lock for in_con
+        QueueWrapper._out_l = Lock() # Lock for out_con
 
 setup = QueueWrapper.setup
 

@@ -110,7 +110,7 @@ def controllerThreadFun(con:Connection):
     controller = ProcessingController(con)
     controller.processLoop()
 
-def controller(control_con:Connection)->Process:
+def setup_controller(control_con:Connection)->Process:
     """
     Build a controller Thread, returning process Handle
 
@@ -124,9 +124,26 @@ def controller(control_con:Connection)->Process:
     p.start()
     return p
     
-        
-        
-        
-        
+def test_sched():
+    from videoQueue import upload, setup as vq_setup
+    from multiprocessing import Pipe
+
+    from common import zipspec
+    from zipfile import ZipFile
+    from os.path import abspath
+
+    from common import locationClass
+    from json import dumps
+
+    vq_ctrl, vq_int_con = Pipe()
+    vq_setup(vq_int_con)
+    proc_ctrl, proc_int_con = Pipe()
+    setup_controller(proc_int_con)
+
     
+    with ZipFile("test.zip", "w") as f:
+        incident = zipspec.Incident(location=locationClass(lat = 52.205276, lon = 0.119167), date=zipspec.jsonDate(year=1970, month=1, day=1), time=zipspec.jsonTime(hour=0, minute=0, second=0), vehicle="Bike")
+        f.writestr("incident.json", dumps(incident))
+        f.write(abspath("assets/IMG_9927.MOV"), "upload.mov") ## Test with actual video
+    upload(abspath("test.zip"))
     

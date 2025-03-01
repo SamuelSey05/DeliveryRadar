@@ -102,7 +102,7 @@ class DBController:
         err = lambda: print("Error: Failed to Connect to Database", file=stderr) 
         if LOCAL_TEST:
             err()
-            return []
+            return
         elif self.connection == None:
             try:
                 con = lambda pwd: connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=pwd, database="cstdeliveryradar")
