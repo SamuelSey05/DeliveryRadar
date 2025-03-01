@@ -1,17 +1,14 @@
 from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec, SIG_END
-from multiprocessing import Queue, Pipe, Process
+from multiprocessing import Queue
 from multiprocessing.connection import Connection
 from queue import Empty
 from os.path import exists, abspath
 from os import rename
 from os import PathLike
 from zipfile import is_zipfile, ZipFile
-from fnmatch import fnmatch
-from json import loads
 from videoQueue.commands import OutCommands
-from typing import Tuple
 
-class VideoQueue():
+class _VideoQueueBase():
     def __init__(self, in_q:Connection=None, out_q:Connection=None, control_con:Connection=None):
         """
         Create a Video Queue
@@ -107,7 +104,7 @@ class VideoQueue():
         Method to monitor the input Queues and perform necessary enqueues and dequeues without blocking on empty
         """        
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
-        while True:
+        while self.active:
             # First check for signal from control connection
             if self.con.poll():
                 sig = self.con.recv()
@@ -152,7 +149,7 @@ class VideoQueue():
         # TODO Handle storage of submitted but not yet processed submissions on close
             
         
-def test_enqueue(q=VideoQueue()):
+def test_enqueue(q=_VideoQueueBase()):
     from common import locationClass
     from json import dumps
     with ZipFile("test.zip", "w") as f:
@@ -162,15 +159,12 @@ def test_enqueue(q=VideoQueue()):
     q.enqueue(abspath("test.zip"))
         
 def test_dequeue():
-    q = VideoQueue()
+    q = _VideoQueueBase()
     test_enqueue(q)
     with TempDir() as temp:
         s = q.dequeue(temp.path())
         print(f"{temp.path()}/{s}.zip")
         input()
-
-if __name__=="__main__":
-    VideoQueue.test_enqueue()
 
 def videoQueueThreadFun(in_int:Connection, out_int:Connection, ctrl:Connection):
     """
@@ -181,22 +175,5 @@ def videoQueueThreadFun(in_int:Connection, out_int:Connection, ctrl:Connection):
         out_int (Connection): Output Connection - for Dequeue and empty commands
         ctrl (Connection): _description_
     """    
-    q = VideoQueue(in_int, out_int, ctrl)
+    q = _VideoQueueBase(in_int, out_int, ctrl)
     q.monitor()
-
-def videoQueue(ctrl:Connection)->Tuple:
-    """
-    Create a Multithreaded Video Queue
-
-    Args:
-        ctrl (Connection): Control Connection - used for Thread Controls - e.g Kill Signal
-
-    Returns:
-        Tuple: _description_
-    """    
-    in_ext, in_int = Pipe()
-    out_ext, out_int = Pipe()
-    p = Process(target=videoQueueThreadFun, args=[in_int, out_int, ctrl])
-    p.start()
-    return (p, in_ext, out_ext)
-    
