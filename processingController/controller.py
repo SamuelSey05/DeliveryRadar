@@ -1,5 +1,4 @@
 from multiprocessing import Process, Queue
-from multiprocessing.connection import Connection
 from database import insertData
 from videoQueue import VideoQueue
 from processingThreads import new_thread
@@ -17,7 +16,8 @@ class Thread(TypedDict):
     """    
     is_free:bool
     p_handle:Process
-    con:Connection
+    ctrl_q:Queue
+    ret_q:Queue
     alive:bool
     procDir:TempDir
 
@@ -30,6 +30,7 @@ class ProcessingController():
         self.db_con = DBController()
         self._ret_q = Queue()
         self.vq = vq
+        self.num_running = 0
         # TODO Add smarter Thread instantiator - load balancing
         for i in range(4):
             self.add_thread()
@@ -38,9 +39,10 @@ class ProcessingController():
         """
         Add a thread to the list of active threads 
         """        
-        t:Tuple[Process, Connection] = (new_thread(self._ret_q))
-        self._threads.append(Thread(is_free=True, p_handle= t[0], con=t[1], alive=True, procDir=TempDir()))
+        t:Tuple[Process, Queue, Queue] = (new_thread(self._ret_q))
+        self._threads.append(Thread(is_free=True, p_handle= t[0], ctrl_q=t[1], ret_q=t[2], alive=True, procDir=TempDir()))
         self.free_threads.put(len(self._threads)-1)
+        self.num_running+=1
     
     def processLoop(self):
         """
@@ -56,7 +58,7 @@ class ProcessingController():
             # If there is a free processing thread, and a video to process
             if not self.free_threads.empty() and not self.vq.vq_empty() and self.active:
                 # Get #, and info of thread to use, mark as in use
-                t = self.free_threads.pop()
+                t = self.free_threads.get()
                 thr:Thread = self._threads[t]
                 thr['is_free'] = False
                 # Get submission zip from VQ, unzip and find video file
@@ -69,14 +71,14 @@ class ProcessingController():
                         vid = f"upload.{ext}"
 
                 # Send path to video file to processing thread
-                thr['con'].send(processingArgs(path=f"{thr['procDir'].path()}/{vid}", thr_id=t, vid_id=submission))
+                thr['ctrl_q'].put(processingArgs(path=f"{thr['procDir'].path()}/{vid}", thr_id=t, vid_id=submission))
             
             if not self._ret_q.empty():
                 # Get # of finished Thread
-                t:int = self._ret_q.pop()
+                t:int = self._ret_q.get()
                 thr = self._threads[t]
                 # Get Speeds returned by Thread from private channel
-                vid_id, speeds = thr['con'].recv()
+                vid_id, speeds = thr['ret_q'].get()
                 
                 # Send to Database
                 with open(f"{thr['procDir'].path()}/incident.json") as jsonObj:
@@ -98,22 +100,22 @@ class ProcessingController():
             thr['p_handle'].join()
             thr['p_handle'].kill()
 
-def controllerThreadFun(con:Connection, vq:VideoQueue):
+def controllerThreadFun(con:Queue, vq:VideoQueue):
     """
     Function run in controller Thread
 
     Args:
-        con (Connection): Control Connection for Processing Controller
+        con (Queue): Control Connection for Processing Controller
     """    
     controller = ProcessingController(con, vq)
     controller.processLoop()
 
-def setup_controller(control_con:Connection, vq:VideoQueue)->Process:
+def setup_controller(control_con:Queue, vq:VideoQueue)->Process:
     """
     Build a controller Thread, returning process Handle
 
     Args:
-        control_con (Connection): Control Connection for Thread
+        control_con (Queue): Control Connection for Thread
 
     Returns:
         Process: handle for process
@@ -123,7 +125,6 @@ def setup_controller(control_con:Connection, vq:VideoQueue)->Process:
     return p
     
 def test_sched():
-    from multiprocessing import Pipe
     from time import sleep
     from common import zipspec
     from zipfile import ZipFile
