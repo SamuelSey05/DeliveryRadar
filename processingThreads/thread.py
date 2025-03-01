@@ -1,4 +1,14 @@
-from processingThreads.videoProcessing import processVideo
+from os import environ
+
+# Enable environment variable to not actually process video and just return dummy data for testing purposes
+from processingController.sched_test import processVideo as processVideo_test
+from processingThreads.videoProcessing import processVideo as processVideo_prod
+
+if environ("DR_TEST_SCHED")!=None:
+    processVideo = processVideo_test
+else:
+    processVideo = processVideo_prod
+
 
 from multiprocessing import Process, Queue, Manager
 from multiprocessing.managers import SyncManager
