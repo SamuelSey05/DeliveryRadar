@@ -1,5 +1,6 @@
-from multiprocessing import Lock, Process, Queue
-from typing import Tuple
+from multiprocessing import Lock, Process, Queue, Manager
+from multiprocessing.managers import SyncManager
+from typing import Tuple, Type
 from os import PathLike
 
 from videoQueue.controller import videoQueueThreadFun
@@ -7,15 +8,16 @@ from videoQueue.commands import OutCommands
 from common import CannotMoveZip, SubmissionError
 
 class VideoQueue:
-    def __init__(self, ctrl:Queue)->Tuple:
+    def __init__(self, ctrl:Queue, man:SyncManager)->Tuple:       
         """
         Create a Multithreaded Video Queue
 
         Args:
             ctrl (Queue): Control Connection - used for Thread Controls - e.g Kill Signal
-        """    
-        in_q = Queue()
-        out_q = Queue()
+            man (Type[Manager]): Global Manager used for creating shared-memory Queues
+        """
+        in_q = man.Queue()
+        out_q = man.Queue()
         p = Process(target=videoQueueThreadFun, args=[in_q, out_q, ctrl])
         p.start()
         self.p_handle:Process = p
@@ -71,7 +73,7 @@ class VideoQueue:
         self._in.put((OutCommands.DEQUEUE, target_dir))
         hash, err = self._out.get()
         self._l.release()
-        if err == "":
+        if err == None:
             return hash
         else:
             # Refuctionalise Errors
@@ -94,7 +96,7 @@ class VideoQueue:
         self._in.put((OutCommands.EMPTY_QUERY, ""))
         res, err = self._out.get()
         self._l.release()
-        if err == "":
+        if err == None:
             return res
         else:
             raise Exception()
