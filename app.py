@@ -3,19 +3,22 @@
 from flask import Flask, Request, request, url_for, render_template, json
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
-from videoQueue import upload, setup as vq_setup
-from multiprocessing import Pipe
-from processingController import controller as proc_setup
+from videoQueue import VideoQueue
+from processingController import setup_controller as proc_setup
 from common import TempDir, prepDBRows, DBConnectionFailure, SIG_END
 from database import getIncidents
 
 import os
+from multiprocessing import Manager, Queue
+from multiprocessing.managers import SyncManager
 
 # Setup Processing and Video Queue with control channels
-vq_ctrl, vq_int_con = Pipe()
-vq_setup(vq_int_con)
-proc_ctrl, proc_int_con = Pipe()
-proc_setup(proc_int_con)
+man:SyncManager = Manager()
+
+vq_ctrl = man.Queue()
+vq = VideoQueue(vq_ctrl, man)
+proc_ctrl = man.Queue()
+proc_p_handle = proc_setup(proc_ctrl, vq)
 
 try:
     class R(Request):
@@ -51,7 +54,7 @@ try:
             file_path = os.path.join(tmp.path(), filename)
             file.save(file_path)  # save the uploaded file in the temporary directory
             try:
-                upload(file_path)  # pass the file path to the upload function
+                vq.upload(file_path)  # pass the file path to the upload function
                 return {"message": "File uploaded successfully"}, 200
             except Exception as e:
                 return {"error": str(e)}, 500
@@ -82,5 +85,5 @@ try:
     #   return render_template("404.html") 
 
 finally:
-    vq_ctrl.send(SIG_END)
-    proc_ctrl.send(SIG_END)
+    vq_ctrl.put(SIG_END)
+    proc_ctrl.put(SIG_END)
