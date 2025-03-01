@@ -6,3 +6,4 @@ class OutCommands(Enum):
     """    
     DEQUEUE = 0
     EMPTY_QUERY = 1
+    ENQUEUE = 2

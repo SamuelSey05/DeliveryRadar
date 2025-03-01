@@ -1,5 +1,4 @@
-from multiprocessing import Pipe, Lock, Process
-from multiprocessing.connection import Connection
+from multiprocessing import Lock, Process, Queue
 from typing import Tuple
 from os import PathLike
 
@@ -8,22 +7,21 @@ from videoQueue.commands import OutCommands
 from common import CannotMoveZip, SubmissionError
 
 class VideoQueue:
-    def __init__(self, ctrl:Connection)->Tuple:
+    def __init__(self, ctrl:Queue)->Tuple:
         """
         Create a Multithreaded Video Queue
 
         Args:
-            ctrl (Connection): Control Connection - used for Thread Controls - e.g Kill Signal
+            ctrl (Queue): Control Connection - used for Thread Controls - e.g Kill Signal
         """    
-        in_ext, in_int = Pipe()
-        out_ext, out_int = Pipe()
-        p = Process(target=videoQueueThreadFun, args=[in_int, out_int, ctrl])
+        in_q = Queue()
+        out_q = Queue()
+        p = Process(target=videoQueueThreadFun, args=[in_q, out_q, ctrl])
         p.start()
         self.p_handle:Process = p
-        self._in:Connection = in_ext
-        self._out:Connection = out_ext
-        self._in_l:Type[Lock] = Lock() # type: ignore # Lock for in_con
-        self._out_l:Type[Lock] = Lock() # type: ignore # Lock for out_con
+        self._in:Queue = in_q
+        self._out:Queue = out_q
+        self._l:Type[Lock] = Lock() # type: ignore # Lock for commands
 
     def upload(self, loc:PathLike) -> str:
         """
@@ -40,11 +38,11 @@ class VideoQueue:
         Returns:
             str: sha256 hash of the submission
         """
-        self._in_l.acquire()
-        self._in.send(loc)
-        hash, err = self._in.recv()
-        self._in_l.release()
-        if err == "":
+        self._l.acquire()
+        self._in.put((OutCommands.ENQUEUE, loc))
+        hash, err = self._out.get()
+        self._l.release()
+        if err == None:
             return hash
         else:
             # Refunctionalise Errors
@@ -69,10 +67,10 @@ class VideoQueue:
         Returns:
             str: sha256 hash of the submission removed, used as ID
         """
-        self._out_l.acquire()
-        self._out.send((OutCommands.DEQUEUE, target_dir))
-        hash, err = self._out.recv()
-        self._out_l.release()
+        self._l.acquire()
+        self._in.put((OutCommands.DEQUEUE, target_dir))
+        hash, err = self._out.get()
+        self._l.release()
         if err == "":
             return hash
         else:
@@ -92,10 +90,10 @@ class VideoQueue:
         Returns:
             bool: True=>Empty; False=>Has Items
         """    
-        self._out_l.acquire()
-        self._out.send((OutCommands.EMPTY_QUERY, ""))
-        res, err = self._out.recv()
-        self._out_l.release()
+        self._l.acquire()
+        self._in.put((OutCommands.EMPTY_QUERY, ""))
+        res, err = self._out.get()
+        self._l.release()
         if err == "":
             return res
         else:
