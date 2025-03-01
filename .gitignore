@@ -1,6 +1,7 @@
 test.*
 common.zip
 **/__pycache__/**
+yolo11n.pt
 
 db_pwd
 .direnv/**

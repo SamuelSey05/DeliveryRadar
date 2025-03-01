@@ -1,4 +1,5 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
+from multiprocessing.managers import SyncManager
 from database import insertData
 from videoQueue import VideoQueue
 from processingThreads import new_thread
@@ -23,12 +24,13 @@ class Thread(TypedDict):
 
 class ProcessingController():
     def __init__(self, ctrl:Queue, vq:VideoQueue):
+        self.thr_man = Manager()
         self.ctrl_con = ctrl
         self.active = True # Used for GC
         self._threads:List[Thread] = []
         self.free_threads = Queue()
         self.db_con = DBController()
-        self._ret_q = Queue()
+        self._ret_q:Queue = self.thr_man.Queue()
         self.vq = vq
         self.num_running = 0
         # TODO Add smarter Thread instantiator - load balancing
@@ -39,7 +41,7 @@ class ProcessingController():
         """
         Add a thread to the list of active threads 
         """        
-        t:Tuple[Process, Queue, Queue] = (new_thread(self._ret_q))
+        t:Tuple[Process, Queue, Queue] = (new_thread(self._ret_q, self.thr_man))
         self._threads.append(Thread(is_free=True, p_handle= t[0], ctrl_q=t[1], ret_q=t[2], alive=True, procDir=TempDir()))
         self.free_threads.put(len(self._threads)-1)
         self.num_running+=1
@@ -95,7 +97,7 @@ class ProcessingController():
                     
     def __del__(self):
         for thr in self._threads:
-            thr['ctrl_q'].send(SIG_END)
+            thr['ctrl_q'].put(SIG_END)
             thr['ctrl_q'].close()
             thr['p_handle'].join()
             thr['p_handle'].kill()
@@ -133,9 +135,11 @@ def test_sched():
     from common import locationClass
     from json import dumps
 
-    vq_ctrl = Queue()
-    vq = VideoQueue(vq_ctrl)
-    proc_ctrl = Queue()
+    man:SyncManager = Manager()
+
+    vq_ctrl = man.Queue()
+    vq = VideoQueue(vq_ctrl, man)
+    proc_ctrl = man.Queue()
     proc_p_handle = setup_controller(proc_ctrl, vq)
 
     for i in range(10):

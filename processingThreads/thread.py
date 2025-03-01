@@ -1,6 +1,7 @@
 from processingThreads.videoProcessing import processVideo
 
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
+from multiprocessing.managers import SyncManager
 
 from typing import Dict, List, Tuple, Union
 
@@ -37,18 +38,19 @@ def thread_fun(ctrl_q:Queue, ret_q:Queue, ret_q_shared:Queue):
         ret_q_shared.put(thr_id)
         data = ctrl_q.get()
 
-def new_thread(ret_q_shared:Queue) -> tuple[Process, Queue, Queue]:   
+def new_thread(ret_q_shared:Queue, man:SyncManager) -> tuple[Process, Queue, Queue]:   
     """
     Create a new processing Thread and Connection to it
 
     Args:
         ret_q (Queue): The Queue for data processed to be returned on
+        man (SyncManager): Shared Memory Manager for Queues
 
     Returns:
         tuple[Process, Connection]: Tuple of the processing Thread ID and the Pipe connection to it
     """    
-    ctrl_q = Queue()
-    ret_q = Queue()
+    ctrl_q = man.Queue()
+    ret_q = man.Queue()
     p = Process(target=thread_fun, args=[ctrl_q, ret_q, ret_q_shared])
     p.start()
     return (p, ctrl_q, ret_q)
