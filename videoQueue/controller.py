@@ -25,7 +25,7 @@ class VideoQueue():
         self.q = Queue()
         self.in_q = in_q
         self.out_q = out_q
-        self.con = Connection
+        self.con = control_con
         self.storage = TempDir() ## Create a Temporary Directory for storing the submissions in
         
     def enqueue(self, submission:PathLike)->str:
@@ -109,7 +109,7 @@ class VideoQueue():
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while True:
             # First check for signal from control connection
-            if (self.con).poll():
+            if self.con.poll():
                 sig = self.con.recv()
                 if sig == SIG_END:
                     self.active = False
