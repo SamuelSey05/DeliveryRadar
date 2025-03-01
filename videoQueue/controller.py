@@ -1,6 +1,5 @@
 from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec, SIG_END
 from multiprocessing import Queue
-from multiprocessing.connection import Connection
 from queue import Empty
 from os.path import exists, abspath
 from os import rename
@@ -9,7 +8,7 @@ from zipfile import is_zipfile, ZipFile
 from videoQueue.commands import OutCommands
 
 class _VideoQueueBase():
-    def __init__(self, in_q:Connection=None, out_q:Connection=None, control_con:Connection=None):
+    def __init__(self, in_q:Queue=None, out_q:Queue=None, control_con:Queue=None):
         """
         Create a Video Queue
 
@@ -106,33 +105,17 @@ class _VideoQueueBase():
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while self.active:
             # First check for signal from control connection
-            if self.con.poll():
-                sig = self.con.recv()
+            if not self.con.empty():
+                sig = self.con.get()
                 if sig == SIG_END:
                     self.active = False
 
             # Then check for signal from enqueue
-            if self.in_q.poll() and self.active:
-                submission:PathLike = self.in_q.recv()
-                hash = ""
-                err = ""
-                try:
-                    hash = self.enqueue(submission)
-                except CannotMoveZip:
-                    err = "CannotMoveZip"
-                except FileNotFoundError:
-                    err = "FileNotFound"
-                except SubmissionError as e:
-                    err = str(e)
-                # Send Result or Defunctionalised Error Back
-                self.in_q.send((hash, err))
-
-            # Finally check for dequeue/isEmpty signals
-            if self.out_q.poll() and self.active:
+            if (not self.in_q.empty()) and self.active:
                 command:OutCommands
                 target:PathLike
-                command, target = self.out_q.recv()
-                err = ""
+                command, target = self.in_q.get()
+                err = None
                 # Defunctionalised Commands, Defunctionalise Raised Errors for return
                 if command == OutCommands.DEQUEUE:
                     hash = ""
@@ -142,10 +125,22 @@ class _VideoQueueBase():
                         err = "CannotMoveZip"
                     except FileNotFoundError:
                         err = "FileNotFound"
-                    self.out_q.send((hash, err))
+                    self.out_q.put((hash, err))
                 elif command == OutCommands.EMPTY_QUERY:
                     empty:bool = self.q.empty()
-                    self.out_q.send((empty, err))
+                    self.out_q.put((empty, err))
+                elif command == OutCommands.ENQUEUE:
+                    hash = ""
+                    try:
+                        hash = self.enqueue(target)
+                    except CannotMoveZip:
+                        err = "CannotMoveZip"
+                    except FileNotFoundError:
+                        err = "FileNotFound"
+                    except SubmissionError as e:
+                        err = e.msg
+                    # Send Result or Defunctionalised Error Back
+                    self.out_q.put((hash, err)) 
         # TODO Handle storage of submitted but not yet processed submissions on close
             
         
@@ -166,14 +161,14 @@ def test_dequeue():
         print(f"{temp.path()}/{s}.zip")
         input()
 
-def videoQueueThreadFun(in_int:Connection, out_int:Connection, ctrl:Connection):
+def videoQueueThreadFun(in_q:Queue, out_q:Queue, ctrl_q:Queue):
     """
     Run by the Video Queue Thread
 
     Args:
-        in_int (Connection): Input Connection - for Enqueue commands
-        out_int (Connection): Output Connection - for Dequeue and empty commands
-        ctrl (Connection): _description_
+        in_q (Queue): Input Connection - for recieving commands
+        out_q (Queue): Output Connection - for returning values/errors
+        ctrl_q (Queue): Control Connection
     """    
-    q = _VideoQueueBase(in_int, out_int, ctrl)
+    q = _VideoQueueBase(in_q, out_q, ctrl_q)
     q.monitor()
