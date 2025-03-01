@@ -73,14 +73,15 @@ class DBController:
         """
         Instantiator attempts to connect to the DataBase, failing and Killing the program if the connection fails
         """        
+        err = lambda: print("\n\nThe program will continue to run, but instead of writing to the database, the SQL statements will be written to cstderr for testing purposes", file=stderr)
         self.connection = None
-        try:
-            self.connect()
-        except DBConnectionFailure:
-            print("Could not connect to database:", file=stderr)
-            if LOCAL_TEST:
-                print("\n\nThe program will continue to run, but instead of writing to the database, the SQL statements will be written to cstderr for testing purposes", file=stderr)
-            else:
+        if LOCAL_TEST:
+            err()
+        else:
+            try:
+                self.connect()
+            except DBConnectionFailure:
+                print("Could not connect to database:", file=stderr)
                 raise DBConnectionFailure
         
     def __del__(self):
@@ -102,7 +103,6 @@ class DBController:
         err = lambda: print("Error: Failed to Connect to Database", file=stderr) 
         if LOCAL_TEST:
             err()
-            return
         elif self.connection == None:
             try:
                 con = lambda pwd: connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=pwd, database="cstdeliveryradar")
