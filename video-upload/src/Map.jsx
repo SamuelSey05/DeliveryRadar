@@ -34,7 +34,7 @@ function Map() {
   const [vehicleType, setVehicleType] = useState("all");
 
   useEffect(() => {
-    fetch('cstdeliveryradar.soc.srcf.net/heatmap-data')
+    fetch('https://cstdeliveryradar.soc.srcf.net/heatmap-data')
       .then(response => {
         if(!response.ok) {
           throw new Error("Heatmap data is unavailable for some reason.");

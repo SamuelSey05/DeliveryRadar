@@ -54,6 +54,7 @@ def heatmap_data():
     except DBConnectionFailure:
         data = []
     response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
+    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route('/', defaults={'path': ''})
