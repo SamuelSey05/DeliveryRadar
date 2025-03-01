@@ -95,8 +95,8 @@ class ProcessingController():
                     
     def __del__(self):
         for thr in self._threads:
-            thr['con'].send(SIG_END)
-            thr['con'].close()
+            thr['ctrl_q'].send(SIG_END)
+            thr['ctrl_q'].close()
             thr['p_handle'].join()
             thr['p_handle'].kill()
 
@@ -147,8 +147,6 @@ def test_sched():
             f.write(abspath("assets/IMG_9927.MOV"), "upload.mov") ## Test with actual video
         vq.upload(abspath("test.zip"))
         sleep(2)
-
-    sleep(20)
 
     vq_ctrl.put(SIG_END)
     proc_ctrl.put(SIG_END)
