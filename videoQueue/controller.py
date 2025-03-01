@@ -109,7 +109,7 @@ class VideoQueue():
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while True:
             # First check for signal from control connection
-            if (self.con).poll():
+            if self.con.poll():
                 sig = self.con.recv()
                 if sig == SIG_END:
                     self.active = False
