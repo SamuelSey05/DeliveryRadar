@@ -13,6 +13,7 @@
     {
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
+          DR_FLASK_LOCAL_TEST=1;
           venvDir = ".venv";
           packages = with pkgs; [ python311 nodejs_18 ] ++
             (with pkgs.python311Packages; [
