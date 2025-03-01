@@ -5,6 +5,7 @@ common.zip
 db_pwd
 .direnv/**
 .venv/**
+.venv
 .vscode
 
 **/.DS_Store
