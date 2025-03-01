@@ -1,1 +1,1 @@
-from processingController.controller import controller
+from processingController.controller import setup_controller
