@@ -26,7 +26,7 @@ function App() {
       {isModalOpen && <UploadModal onClose={() => setIsModalOpen(false)} />}
     </div>
     <div className="app-container dark-theme" style={{zIndex: 1000, left: (isPortrait? "5%" : "55%"), right: "5%", top: "5%", bottom: (isPortrait ? "55%" : "5%")}}>
-      <Map></Map>
+      <Map isPortrait={isPortrait}></Map>
     </div>
     </div>
 

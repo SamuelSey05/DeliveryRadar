@@ -5,23 +5,23 @@ import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapL
 
 const HeatmapLayer = HeatmapLayerFactory();
 
-const mapContainerStyle = {
-  position: "absolute",
-  top: "2%",
-  bottom: "2%",
-  left: "2%",
-  width: "400px",
-  display: "flex",
-  zIndex: 1000,
-};
-
 const layersControlStyle = {position: "fixed", zIndex: "inherit"
 };
 
 const centre = [52.211, 0.092];
 
 
-function Map() {
+function Map( {isPortrait}) {
+
+  const mapContainerStyle = {
+    position: "absolute",
+    top: "2%",
+    bottom: "2%",
+    left: "2%",
+    width: isPortrait ? "330px" :"400px",
+    display: "flex",
+    zIndex: 1000,
+  };
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
