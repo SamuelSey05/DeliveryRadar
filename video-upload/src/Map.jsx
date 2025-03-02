@@ -6,23 +6,19 @@ import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapL
 const HeatmapLayer = HeatmapLayerFactory();
 
 const mapContainerStyle = {
-  position: "relative",
-  width: "40vw",
-  height: "80vh",
-  display: "block",
-  marginLeft: "auto",
-  marginRight: "auto",
-  marginTop: "auto",
-  marginBottom: "auto",
-  zIndex: 0,
+  position: "absolute",
+  top: "2%",
+  bottom: "2%",
+  left: "2%",
+  width: "400px",
+  display: "flex",
+  zIndex: 1000,
 };
 
 const layersControlStyle = {position: "fixed", zIndex: "inherit"
 };
 
 const centre = [52.211, 0.092];
-
-const points = []
 
 
 function Map() {
@@ -32,6 +28,8 @@ function Map() {
   const [error, setError] = useState(null);
 
   const [vehicleType, setVehicleType] = useState("all");
+
+  const [time, setTime] = useState(NaN);
 
   useEffect(() => {
     fetch('https://cstdeliveryradar.soc.srcf.net/heatmap-data')
@@ -52,29 +50,19 @@ function Map() {
 
   }, []);
 
-
-  let i;
-  for (i = 0; i < 10; i++) {
-    points.push([{
-      long: centre[0], 
-      lat: centre[1] + 0.0001 * i,
-      intensity: 0.0001}]);
-  }
-
   if (loading) return <div>Data is loading, wait a sec...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-
-  return <div className="map-container"><MapContainer center={ centre } zoom={20} style = { mapContainerStyle } scrollWheelZoom = {true}>
-    <LayersControl style = {layersControlStyle}> {/* */}
-      <LayersControl.BaseLayer name="Base" checked style = {{layersControlStyle}}>
-    <TileLayer
-    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  return <div className="map-container">
+    <MapContainer center={ centre } zoom={20} style = { mapContainerStyle } scrollWheelZoom = {true}>
+      <LayersControl style = {layersControlStyle}>
+        <LayersControl.BaseLayer name="Base" checked style = {layersControlStyle}>
+          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       url= "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" style = {{layersControlStyle}}>
     </TileLayer>
     </LayersControl.BaseLayer>
-    <LayersControl.Overlay name="Heatmap" checked style = {{layersControlStyle}}>
-      <HeatmapLayer fitBoundsOnLoad fitBoundsOnUpdate points={{/*JSON.parse(data)*/points}} longitudeExtractor={m => m.long} latitudeExtractor={m => m.lat} intensityExtractor={m => parseFloat(m.intensity)} style = {{layersControlStyle}}>
+    <LayersControl.Overlay name="Heatmap" checked style = {layersControlStyle}>
+      <HeatmapLayer fitBoundsOnLoad fitBoundsOnUpdate points={data} longitudeExtractor={m => m.location.lon} latitudeExtractor={m => m.location.lat} intensityExtractor={m => m.speed} style = {{layersControlStyle}} blur = {5}>
 
       </HeatmapLayer>
       

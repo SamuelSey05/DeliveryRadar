@@ -50,7 +50,6 @@ body {
   bottom: 5%;
   display: flex;
   flex-direction: column;
-  align-items: center;
   flex: auto;
   z-index: 500;
 }

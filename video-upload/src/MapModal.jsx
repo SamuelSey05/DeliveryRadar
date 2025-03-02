@@ -8,6 +8,7 @@ import './MapModal.css';
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
 
+
 const customMarkerIcon = new L.Icon({
   iconUrl: markerIconPng,
   shadowUrl: markerShadowPng,
