@@ -2,6 +2,8 @@ import {useState, useEffect} from 'react';
 import "leaflet/dist/leaflet.css";
 import { LayersControl, MapContainer, TileLayer} from "react-leaflet";
 import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapLayer";
+//import Rcslider from "rc-slider";
+import 'rc-slider/assets/index.css'
 
 const HeatmapLayer = HeatmapLayerFactory();
 
@@ -10,16 +12,16 @@ const layersControlStyle = {position: "fixed", zIndex: "inherit"
 
 const centre = [52.211, 0.092];
 
-
-function Map( {isPortrait}) {
+{/*isPortrait*/}
+function Map( ) {
 
   const mapContainerStyle = {
     position: "absolute",
-    top: "2%",
-    bottom: "2%",
-    left: "2%",
-    width: isPortrait ? "330px" :"400px",
-    display: "flex",
+    top: "10px",
+    bottom: "10px",
+    left: "10px",
+    right: "10px",
+    display: "block",
     zIndex: 1000,
   };
 
@@ -27,9 +29,19 @@ function Map( {isPortrait}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [vehicleType, setVehicleType] = useState("all");
+  {/*const [vehicleType, setVehicleType] = useState("all");
 
-  const [time, setTime] = useState(NaN);
+  const [time, setTime] = useState(0);
+
+  const handleSliderChange = (t) => {
+    setTime(t);
+  }
+
+  const convertMinutesToFormatted = (minutes) => {
+    const hours = minutes/60;
+    const mins = minutes%60;
+    return String(hours) + ":" + String(mins);
+  }*/}
 
   useEffect(() => {
     fetch('https://cstdeliveryradar.soc.srcf.net/heatmap-data')
@@ -70,6 +82,11 @@ function Map( {isPortrait}) {
     </LayersControl.Overlay>
     </LayersControl>
   </MapContainer>
+  {/*<div style={{position: "absolute", bottom: "2%", left: "2%", right: "2%", margin: "800px", zIndex: 1000}}>
+    <p>Selected time: {convertMinutesToFormatted(time)}</p>
+  <Rcslider min={0} max={1440} step={15} value={time} onChange={handleSliderChange} 
+  style={{position: "absolute", display: "flex",  zIndex: "inherit"}}></Rcslider>
+  </div>*/}
   </div>
 }
 
