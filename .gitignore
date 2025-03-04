@@ -10,4 +10,8 @@ db_pwd
 .venv/**
 .vscode
 
+roboflow_api_key
+*.pyc
+*.pt
+
 **/.DS_Store
