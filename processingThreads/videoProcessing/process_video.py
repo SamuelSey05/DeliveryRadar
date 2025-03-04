@@ -10,6 +10,7 @@ from processingThreads.videoProcessing.calculate_homography import compute_homog
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
 
+
 def get_key(filename):
     try:
         with open(filename, "r") as f:
@@ -17,7 +18,18 @@ def get_key(filename):
     except FileNotFoundError:
         print(f"{filename} file not found")
 
-def processVideo(id:int, vid:str):
+def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
+    """
+    Process the provided video input
+
+    Args:
+        id (str): SHA256 of the submission, used as ID
+        vid (os.path): Path to the recorded video
+
+    Returns:
+        tuple[str, Dict[int,float]]: Processing ID, dict of vehicle ID to speed
+    """
+    
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
         api_key=get_key("roboflow_api_key")
@@ -169,5 +181,6 @@ def frames_to_speed(frames: dict[int, List[Tuple[int, float, float, float, float
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
 
         speeds[obj_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
+
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each detected object

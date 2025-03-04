@@ -1,1 +1,1 @@
-from .object import ProcessingThread
+from processingThreads.thread import new_thread
