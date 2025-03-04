@@ -2,7 +2,7 @@ from math import inf
 import cv2
 from inference_sdk import InferenceHTTPClient
 from deep_sort_realtime.deepsort_tracker import DeepSort
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
@@ -82,7 +82,7 @@ def processVideo(id:int, vid:str):
             if (x < 0 or y < 0):
                 continue
 
-            tracked_id = obj.track_id
+            tracked_id = int(obj.track_id)
             label = obj.det_class
 
             # VISUAL TESTING
