@@ -4,7 +4,7 @@ from os import environ
 from processingController.sched_test import processVideo as processVideo_test
 from processingThreads.videoProcessing import processVideo as processVideo_prod
 
-if environ("DR_TEST_SCHED")!=None:
+if environ.get("DR_TEST_SCHED")!=None:
     processVideo = processVideo_test
 else:
     processVideo = processVideo_prod
@@ -12,6 +12,7 @@ else:
 
 from multiprocessing import Process, Queue, Manager
 from multiprocessing.managers import SyncManager
+from threading import Semaphore
 
 from typing import Dict, List, Tuple, Union
 
@@ -19,7 +20,7 @@ from common import processingArgs, SIG_END
 
 import os.path
     
-def thread_fun(ctrl_q:Queue, ret_q:Queue, ret_q_shared:Queue):
+def thread_fun(ctrl_q:Queue, ret_q:Queue, ret_q_shared:Queue, sem:Semaphore):
     """
     Function Performed by Each processing Thread
 
@@ -27,13 +28,7 @@ def thread_fun(ctrl_q:Queue, ret_q:Queue, ret_q_shared:Queue):
         ctrl_q (Queue): Connection End to Controller
         ret_q (Queue): Connection to Return values down
         ret_q_shared (Queue): Queue to return ID down
-    """    
-    """
     
-
-    Args:
-        con (Connection): 
-
     Returns(Down Pipe):
         Tuple[str, List[float]]: Will Send (ID, [Speeds]) back along pipe to controller
     """
@@ -46,9 +41,10 @@ def thread_fun(ctrl_q:Queue, ret_q:Queue, ret_q_shared:Queue):
         speeds:List[float] = list(ret[1].values())
         ret_q.put((vid_id, speeds))
         ret_q_shared.put(thr_id)
+        sem.release()
         data = ctrl_q.get()
 
-def new_thread(ret_q_shared:Queue, man:SyncManager) -> tuple[Process, Queue, Queue]:   
+def new_thread(ret_q_shared:Queue, man:SyncManager, sem:Semaphore) -> tuple[Process, Queue, Queue]:   
     """
     Create a new processing Thread and Connection to it
 
@@ -61,6 +57,6 @@ def new_thread(ret_q_shared:Queue, man:SyncManager) -> tuple[Process, Queue, Que
     """    
     ctrl_q = man.Queue()
     ret_q = man.Queue()
-    p = Process(target=thread_fun, args=[ctrl_q, ret_q, ret_q_shared])
+    p = Process(target=thread_fun, args=[ctrl_q, ret_q, ret_q_shared, sem])
     p.start()
     return (p, ctrl_q, ret_q)

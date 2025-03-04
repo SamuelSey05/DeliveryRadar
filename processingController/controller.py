@@ -1,5 +1,6 @@
 from multiprocessing import Process, Queue, Manager
 from multiprocessing.managers import SyncManager
+from threading import Semaphore
 from database import insertData
 from videoQueue import VideoQueue
 from processingThreads import new_thread
@@ -23,7 +24,7 @@ class Thread(TypedDict):
     procDir:TempDir
 
 class ProcessingController():
-    def __init__(self, ctrl:Queue, vq:VideoQueue):
+    def __init__(self, ctrl:Queue, vq:VideoQueue, sem:Semaphore):
         self.thr_man = Manager()
         self.ctrl_con = ctrl
         self.active = True # Used for GC
@@ -33,6 +34,7 @@ class ProcessingController():
         self._ret_q:Queue = self.thr_man.Queue()
         self.vq = vq
         self.num_running = 0
+        self.sem = sem
         # TODO Add smarter Thread instantiator - load balancing
         for i in range(4):
             self.add_thread()
@@ -41,7 +43,7 @@ class ProcessingController():
         """
         Add a thread to the list of active threads 
         """        
-        t:Tuple[Process, Queue, Queue] = (new_thread(self._ret_q, self.thr_man))
+        t:Tuple[Process, Queue, Queue] = (new_thread(self._ret_q, self.thr_man, self.sem))
         self._threads.append(Thread(is_free=True, p_handle= t[0], ctrl_q=t[1], ret_q=t[2], alive=True, procDir=TempDir()))
         self.free_threads.put(len(self._threads)-1)
         self.num_running+=1
@@ -51,6 +53,7 @@ class ProcessingController():
         Method that runs in the Scheduling Thread
         """        
         while self.active or self.num_running>0:
+            self.sem.acquire()
             if not self.ctrl_con.empty():
                 sig = self.ctrl_con.get()
                 if sig == SIG_END:
@@ -102,17 +105,17 @@ class ProcessingController():
             thr['p_handle'].join()
             thr['p_handle'].kill()
 
-def controllerThreadFun(con:Queue, vq:VideoQueue):
+def controllerThreadFun(con:Queue, vq:VideoQueue, sem:Semaphore):
     """
     Function run in controller Thread
 
     Args:
         con (Queue): Control Connection for Processing Controller
     """    
-    controller = ProcessingController(con, vq)
+    controller = ProcessingController(con, vq, sem)
     controller.processLoop()
 
-def setup_controller(control_con:Queue, vq:VideoQueue)->Process:
+def setup_controller(control_con:Queue, vq:VideoQueue, sem:Semaphore)->Process:
     """
     Build a controller Thread, returning process Handle
 
@@ -122,7 +125,7 @@ def setup_controller(control_con:Queue, vq:VideoQueue)->Process:
     Returns:
         Process: handle for process
     """    
-    p = Process(target=controllerThreadFun, args=[control_con, vq])
+    p = Process(target=controllerThreadFun, args=[control_con, vq, sem])
     p.start()
     return p
     

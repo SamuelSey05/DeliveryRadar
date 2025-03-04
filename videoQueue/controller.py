@@ -1,5 +1,6 @@
 from common import hashFile, TempDir, SubmissionError, CannotMoveZip, zipspec, SIG_END
 from multiprocessing import Queue
+from threading import Semaphore
 from queue import Empty
 from os.path import exists, abspath
 from os import rename
@@ -8,7 +9,7 @@ from zipfile import is_zipfile, ZipFile
 from videoQueue.commands import OutCommands
 
 class _VideoQueueBase():
-    def __init__(self, in_q:Queue=None, out_q:Queue=None, control_con:Queue=None):
+    def __init__(self, in_q:Queue=None, out_q:Queue=None, control_con:Queue=None, sem:Semaphore = None):
         """
         Create a Video Queue
 
@@ -22,6 +23,7 @@ class _VideoQueueBase():
         self.in_q = in_q
         self.out_q = out_q
         self.con = control_con
+        self.sem = sem
         self.storage = TempDir() ## Create a Temporary Directory for storing the submissions in
         
     def enqueue(self, submission:PathLike)->str:
@@ -104,10 +106,12 @@ class _VideoQueueBase():
         """        
         # TODO: Change to Signal/Semaphore Based Responses instead of Polling
         while self.active:
+            self.sem.acquire()
             # First check for signal from control connection
             if not self.con.empty():
                 sig = self.con.get()
                 if sig == SIG_END:
+                    print("Deactivating Video Queue Thread")
                     self.active = False
 
             # Then check for signal from enqueue
@@ -161,7 +165,7 @@ def test_dequeue():
         print(f"{temp.path()}/{s}.zip")
         input()
 
-def videoQueueThreadFun(in_q:Queue, out_q:Queue, ctrl_q:Queue):
+def videoQueueThreadFun(in_q:Queue, out_q:Queue, ctrl_q:Queue, sem:Semaphore):
     """
     Run by the Video Queue Thread
 
@@ -170,5 +174,5 @@ def videoQueueThreadFun(in_q:Queue, out_q:Queue, ctrl_q:Queue):
         out_q (Queue): Output Connection - for returning values/errors
         ctrl_q (Queue): Control Connection
     """    
-    q = _VideoQueueBase(in_q, out_q, ctrl_q)
+    q = _VideoQueueBase(in_q, out_q, ctrl_q, sem)
     q.monitor()

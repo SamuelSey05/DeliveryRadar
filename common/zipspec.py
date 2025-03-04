@@ -3,7 +3,7 @@ from datetime import datetime
 
 from common.db_types import locationClass
 
-videoExtensions = ("mp4", "mov", "mkv")
+videoExtensions = ("mp4", "mov", "mkv", "MOV")
 
 class jsonDate(TypedDict):
     year:int

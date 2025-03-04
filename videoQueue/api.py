@@ -1,6 +1,7 @@
 from multiprocessing import Lock, Process, Queue, Manager
 from multiprocessing.managers import SyncManager
-from typing import Tuple, Type
+from threading import Semaphore
+from typing import Tuple, Type, Optional
 from os import PathLike
 
 from videoQueue.controller import videoQueueThreadFun
@@ -8,7 +9,7 @@ from videoQueue.commands import OutCommands
 from common import CannotMoveZip, SubmissionError
 
 class VideoQueue:
-    def __init__(self, ctrl:Queue, man:SyncManager)->Tuple:       
+    def __init__(self, ctrl:Queue, man:SyncManager, vq_sem:Semaphore, proc_sem:Semaphore)->Tuple:       
         """
         Create a Multithreaded Video Queue
 
@@ -16,16 +17,18 @@ class VideoQueue:
             ctrl (Queue): Control Connection - used for Thread Controls - e.g Kill Signal
             man (Type[Manager]): Global Manager used for creating shared-memory Queues
         """
-        in_q = man.Queue()
-        out_q = man.Queue()
-        p = Process(target=videoQueueThreadFun, args=[in_q, out_q, ctrl])
+        command_q = man.Queue()
+        ret_q = man.Queue()
+        self.sem:Semaphore = vq_sem
+        self.proc_sig = proc_sem
+        p = Process(target=videoQueueThreadFun, args=[command_q, ret_q, ctrl, vq_sem])
         p.start()
         self.p_handle:Process = p
-        self._in:Queue = in_q
-        self._out:Queue = out_q
+        self._in:Queue = command_q
+        self._out:Queue = ret_q
         self._l:Type[Lock] = Lock() # type: ignore # Lock for commands
 
-    def upload(self, loc:PathLike) -> str:
+    def upload(self, loc:PathLike, debug:bool=False) -> str:
         """
         Uploads a new video into the queue
 
@@ -40,11 +43,25 @@ class VideoQueue:
         Returns:
             str: sha256 hash of the submission
         """
+        if debug:
+            print("Acquire lock")
         self._l.acquire()
+        if debug:
+            print("Lock Acquired")
         self._in.put((OutCommands.ENQUEUE, loc))
+        self.sem.release()
+        if debug:
+            print("Enqueue Requested")
+        hash:str
+        err:Optional[str]
         hash, err = self._out.get()
+        if debug:
+            print("Enqueue Results recieved, releasing lock")
         self._l.release()
+        if debug:
+            print(f"Lock Released\nResponse: {hash} / {err}")
         if err == None:
+            self.proc_sig.release()
             return hash
         else:
             # Refunctionalise Errors
@@ -71,6 +88,7 @@ class VideoQueue:
         """
         self._l.acquire()
         self._in.put((OutCommands.DEQUEUE, target_dir))
+        self.sem.release()
         hash, err = self._out.get()
         self._l.release()
         if err == None:
@@ -94,6 +112,7 @@ class VideoQueue:
         """    
         self._l.acquire()
         self._in.put((OutCommands.EMPTY_QUERY, ""))
+        self.sem.release()
         res, err = self._out.get()
         self._l.release()
         if err == None:
