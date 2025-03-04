@@ -17,6 +17,7 @@ def get_key(filename):
     except FileNotFoundError:
         print(f"{filename} file not found")
 
+
 def processVideo(id:int, vid:str):
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
@@ -171,3 +172,6 @@ def frames_to_speed(frames: dict[int, List[Tuple[int, float, float, float, float
         speeds[obj_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each detected object
+
+def test():
+    print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
