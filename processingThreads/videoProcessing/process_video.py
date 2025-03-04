@@ -115,8 +115,6 @@ def processVideo(id:int, vid:str):
 
     homography_matrix = compute_homography_matrix_cones(cone_points)
 
-    #print(homography_matrix, pixel_points)
-
     capture.release()
 
     return (id, frames_to_speed(bike_data, fps, homography_matrix, cone_points[:2]))
@@ -138,6 +136,3 @@ def frames_to_speed(bikes_frames: dict[int, List[Tuple[int, float, float, float,
         speeds[bike_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each bike
-
-
-print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
