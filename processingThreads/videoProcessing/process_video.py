@@ -1,8 +1,9 @@
+import os.path
 from math import inf
 import cv2
 from inference_sdk import InferenceHTTPClient
 from deep_sort_realtime.deepsort_tracker import DeepSort
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
