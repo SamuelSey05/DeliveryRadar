@@ -4,9 +4,12 @@ from os import getenv as env
 import os.path
 from typing import List
 from datetime import datetime
-import sys
+from sys import stderr
 import traceback
 from json import dumps, loads
+from common import DBConnectionFailure
+
+LOCAL_TEST = (env("DR_FLASK_LOCAL_TEST")!=None)
  
 def dump_time(time:datetime)->str:
     """
@@ -61,12 +64,6 @@ def prepare_insert(id:str, speeds:List[float], time:datetime, location:locationC
     for speed in speeds:
         res += f"('{id}', '{speed}', '{dump_time(time)}', '{dump_location(location)}', '{int(test_data)}'),"
     return res.removesuffix(",")
-
-class DBConnectionFailure(Exception):
-    """
-    Exception to be thrown if the DataBase connection Fails
-    """    
-    pass
             
 class DBController:
     """
@@ -76,13 +73,16 @@ class DBController:
         """
         Instantiator attempts to connect to the DataBase, failing and Killing the program if the connection fails
         """        
+        err = lambda: print("\n\nThe program will continue to run, but instead of writing to the database, the SQL statements will be written to cstderr for testing purposes", file=stderr)
         self.connection = None
-        try:
-            self.connect()
-        except DBConnectionFailure:
-            print("Error: Failed to Connect to Database", file=sys.stderr)
-            traceback.print_exc()
-            quit()
+        if LOCAL_TEST:
+            err()
+        else:
+            try:
+                self.connect()
+            except DBConnectionFailure:
+                print("Could not connect to database:", file=stderr)
+                raise DBConnectionFailure
         
     def __del__(self):
         """
@@ -99,8 +99,11 @@ class DBController:
             
         Returns: 
             None
-        """        
-        if self.connection == None:
+        """   
+        err = lambda: print("Error: Failed to Connect to Database", file=stderr) 
+        if LOCAL_TEST:
+            err()
+        elif self.connection == None:
             try:
                 con = lambda pwd: connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=pwd, database="cstdeliveryradar")
                 if os.path.isfile(os.path.abspath("db_pwd")):
@@ -109,8 +112,8 @@ class DBController:
                 else:
                     self.connection = con(env("DELIVERYRADAR_DB_PWD"))
             except:
-                
-                raise DBConnectionFailure
+                err()
+                raise DBConnectionFailure()
     
     def disconnect(self) -> None:
         """
@@ -118,12 +121,19 @@ class DBController:
 
         Raises:
             DBConnectionFailure: Already Disconnected
-        """        
-        if self.connection != None:
-            if not self.connection.is_connected():
-                raise DBConnectionFailure
-            else:
-                self.connection.disconnect()
+        """
+        err = lambda: print("Not connected to a database, hence cannot disconnect")
+        if LOCAL_TEST:
+            err()
+            return
+        else:     
+            if self.connection != None:
+                if not self.connection.is_connected():
+                    err()
+                    raise DBConnectionFailure()
+                else:
+                    self.connection.disconnect()
+                    self.connection = None
         
     # def _sqlCommand(self, command:str) -> List[connector.RowType]:
     #     if not self.connection.is_connected():
@@ -145,17 +155,27 @@ class DBController:
         Returns:
             List[DBRow]: List of Incidents Recorded
         """        
-        if not self.connection.is_connected():
-            raise DBConnectionFailure
+        command = "SELECT hash AS id, speed, time, location FROM Incidents;"
+        err = lambda : print(f"Cannot Connect to Database, SELECT Failed:\n\n{command}", file = stderr)
+        if LOCAL_TEST:
+            err()
+            return []
         else:
+            if self.connection == None or not self.connection.is_connected(): # If not connected to database
+                try:
+                    self.connect() # Try to reconnect
+                except DBConnectionFailure:
+                    err()
+                    raise DBConnectionFailure()
+            # Get Incidents from database
             cursor = self.connection.cursor()
-            cursor.execute("SELECT hash AS id, speed, time, location FROM Incidents;")
+            cursor.execute(command)
             data = []
             row = cursor.fetchone()
             while row is not None:
-                print( row )
+                # print( row )
                 tmp = DBRow(id = row[0].decode("ascii"), speed=row[1], time=row[2], location=load_location(row[3])) 
-                print(tmp)
+                # print(tmp)
                 data.append(tmp)
                 row = cursor.fetchone()
             cursor.fetchall()
@@ -175,18 +195,25 @@ class DBController:
 
         Raises:
             DBConnectionFailure: Database connection failed
-        """        
-        if self.connection == None or not self.connection.is_connected():
-            raise DBConnectionFailure
+        """  
+        command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, [speed], time, location)};"
+        err = lambda: print (f"Failed to connect to Database, INSERT Failed:\n\n{command}\n", file=stderr)
+        if LOCAL_TEST:
+            err()
+            return
         else:
+            if self.connection == None or not self.connection.is_connected(): # If not connected to database
+                try:
+                    self.connect() # Try to reconnect
+                except DBConnectionFailure:
+                    err()
+                    raise DBConnectionFailure()
             cursor = self.connection.cursor()
-            command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, [speed], time, location)};"
-            print (command)
+            #print (command)
             cursor.execute(command)
-            print(cursor.fetchwarnings(), file=sys.stderr)
+            # print(cursor.fetchwarnings(), file=sys.stderr)
             cursor.fetchall()
             self.connection.commit()
-            return True
             
     def addIncidents(self, id:str, speeds:List[float], time:datetime, location:locationClass)-> None:
         """
@@ -200,15 +227,23 @@ class DBController:
 
         Raises:
             DBConnectionFailure: Database connection failed
-        """        
-        if self.connection == None or not self.connection.is_connected():
-            raise DBConnectionFailure
+        """    
+        command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, speeds, time, location)};"
+        err = lambda: print (f"Failed to connect to Database, INSERT Failed:\n\n{command}\n", file=stderr)
+        if LOCAL_TEST:
+            err()
+            return
         else:
+            if self.connection == None or not self.connection.is_connected(): # If not connected to database
+                try:
+                    self.connect() # Try to reconnect
+                except DBConnectionFailure:
+                    err()
+                    raise DBConnectionFailure()
             cursor = self.connection.cursor()
-            command = f"INSERT INTO Incidents (hash, speed, time, location, isTest) VALUES {prepare_insert(id, speeds, time, location)};"
-            print (command)
+            # print (command)
             cursor.execute(command)
-            print(cursor.fetchwarnings(), file=sys.stderr)
+            # print(cursor.fetchwarnings(), file=stderr)
             cursor.fetchall()
             self.connection.commit()
     

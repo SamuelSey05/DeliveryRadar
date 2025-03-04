@@ -1,8 +1,9 @@
 from typing import TypedDict
+from datetime import datetime
 
 from common.db_types import locationClass
 
-videoExtensions = ("mp4", "mov", "mkv")
+videoExtensions = ("mp4", "mov", "mkv", "MOV")
 
 class jsonDate(TypedDict):
     year:int
@@ -19,3 +20,6 @@ class Incident(TypedDict):
     date:jsonDate
     time:jsonTime
     vehicle:str
+    
+def datetimeFromIncident(inc:Incident)->datetime:
+    return datetime(inc["date"]["year"], inc["date"]["month"], inc["date"]["day"], inc["time"]["hour"], inc["time"]["minute"], inc["time"]["second"])
