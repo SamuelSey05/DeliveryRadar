@@ -91,7 +91,8 @@ def processVideo(id:int, vid:str):
             # cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            data[tracked_id] = data.get(tracked_id, []).append((frame_number, x, y, w, h))
+            data.setdefault(tracked_id, [])
+            data[tracked_id].append((frame_number, x, y, w, h))
 
         # UNCOMMENT FOR VISUAL TESTING
         # cv2.imshow("Test", frame)
@@ -115,7 +116,8 @@ def processVideo(id:int, vid:str):
         # get tuple of (x,y) tuples from the filtered contours
         # increment counter of how many times that reference location has been seen
         reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
-        reference_points[reference_index] = reference_points.get(reference_index, 0) + 1 
+        reference_points.setdefault(reference_index, 0)
+        reference_points[reference_index] = reference_points.get(reference_index) + 1 
 
     # os.remove(vid)
 
