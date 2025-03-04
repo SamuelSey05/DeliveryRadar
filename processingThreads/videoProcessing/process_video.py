@@ -83,7 +83,7 @@ def processVideo(id:int, vid:str):
             if (x < 0 or y < 0):
                 continue
 
-            tracked_id = obj.track_id
+            tracked_id = int(obj.track_id)
             label = obj.det_class
 
             data.setdefault(tracked_id, [])
