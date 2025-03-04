@@ -3,11 +3,11 @@ import numpy as np
 
 
 def compute_speed(
-        pixels_per_sec: np.darray, 
-        homography_matrix: np.darray | None, 
+        pixels_per_sec: np.ndarray, 
+        homography_matrix: np.ndarray | None, 
         pixels_per_meter: float = 200, 
         reference_points: list[tuple[float, float]] | None = None
-        ) -> np.darray:
+        ) -> np.ndarray:
     """
     Convert pixel speed into real-world speed using homography correction.
 

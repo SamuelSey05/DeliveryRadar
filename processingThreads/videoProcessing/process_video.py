@@ -119,9 +119,6 @@ def processVideo(id:int, vid:str):
         reference_points.setdefault(reference_index, 0)
         reference_points[reference_index] = reference_points.get(reference_index) + 1 
 
-    # os.remove(vid)
-
-
     # get most common reference points
     observed_references = list(max(reference_points, key=reference_points.get))
 
