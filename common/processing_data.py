@@ -1,8 +1,8 @@
 from typing import TypedDict
-import os.path
+from os import PathLike
 
 class processingArgs(TypedDict):
-    path:os.path
+    path:PathLike
     vid_id:str
     thr_id:int
     
