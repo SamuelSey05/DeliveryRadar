@@ -1,3 +1,6 @@
+*.pyc
+*.pt
+
 test.*
 common.zip
 **/__pycache__/**
@@ -9,6 +12,8 @@ db_pwd
 .venv
 .vscode
 
-**/.DS_Store
+roboflow_api_key
+*.pyc
+*.pt
 
-yolo11n.pt
+**/.DS_Store
