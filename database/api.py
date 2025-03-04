@@ -17,6 +17,7 @@ def insertData(id:str, speeds:List[float], time:datetime, location:locationClass
     """    
     _controller.addIncidents(id, speeds, time, location)
 
+# TODO this is not serialising
 def getIncidents()->List[DBRow]:
     """
     Returns the Incidents stored in the database for processing into the heatmap
