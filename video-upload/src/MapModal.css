@@ -1,0 +1,69 @@
+.map-modal-overlay {
+  position: absolute;
+  top: 2%;
+  bottom: 2%;
+  left: 2%;
+  right: 2%;
+  background: rgba(0, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.map-modal {
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  background: #121212;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: inherit;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  min-height: 0; /* Prevents flex container from overflowing */
+  z-index: inherit;
+}
+
+.map-controls {
+  position: relative;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  background: #1e1e1e;
+}
+
+.confirm-button {
+  position: relative;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.confirm-button:hover {
+  background: #45a049;
+}
+
+.close-button {
+  background: #ff4f4f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.close-button:hover {
+  background: #d43f3f;
+}

@@ -1,10 +1,13 @@
 *.pyc
 *.pt
 
-test.py
+test.*
 common.zip
 **/__pycache__/**
 
 db_pwd
 .direnv/**
 .venv/**
+.vscode
+
+**/.DS_Store

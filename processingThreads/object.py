@@ -1,4 +1,4 @@
-from videoProcessing import processVideo
+from .videoProcessing import processVideo
 
 import os.path
 
