@@ -35,35 +35,47 @@ function UploadModal({ onClose }) {
       },
       vehicle: vehicleType,
     };
-  
-    console.log(JSON.stringify(formData, null, 2)); //print formData in inspect -> console in web browser
+    
+    //print formData in inspect -> console in web browser
+    console.log(JSON.stringify(formData, null, 2)); 
 
+    //create a new ZIP archive
     const zip = new JSZip();
+
+    //add the user's input data (formData) as a JSON named 'incident.json' to the ZIP archive
     zip.file("incident.json", JSON.stringify(formData, null, 2));
+
+    //extract the file extension from the uploaded video file 
     const videoExtension = video.name.split(".").pop();
+
+    //add file (renamed to upload) to the zip ARCHIVE, keeping the original video file extension 
     zip.file(`upload.${videoExtension}`, video, { binary: true });
 
     try {
+      //generate the ZIP file
       const zipBlob = await zip.generateAsync({ type: "blob" });
+
+      //create formData object and append the ZIP file, under the name "file"
       const formDataToSend = new FormData();
       formDataToSend.append("file", zipBlob, "submission.zip");
 
+      //send ZIP to server via POST request to '/upload' endpoint (in app.py)
       const response = await fetch("/upload", {
         method: "POST",
         body: formDataToSend,
       });
 
+      //receive the JSON response from the server, and print to console 
       const jsonResponse = await response.json()
       console.log("Server response:", jsonResponse)
 
+      //check if response indicates an error
       if (!response.ok) {
-        throw new Error("Failed to upload ZIP file");
+        throw new Error();
       }
 
-      //alert("Upload successful - line 62 in jsx")
     } catch (error) {
-      console.error("Error generating or uploading ZIP file:", error);
-      //alert("Upload failed - line 65 in jsx")
+      console.error("Error uploading submission, please try again");
     }
 
     onClose();
