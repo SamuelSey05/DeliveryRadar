@@ -1,10 +1,10 @@
 .map-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
+  position: absolute;
+  top: 2%;
+  bottom: 2%;
+  left: 2%;
+  right: 2%;
+  background: rgba(0, 0, 0, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,26 +12,26 @@
 }
 
 .map-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 85vw;
-  height: 85vh;
+  position: absolute;
+  width: 90%;
+  height: 90%;
   background: #121212;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: inherit;
 }
 
 .map-container {
   flex: 1;
   position: relative;
   min-height: 0; /* Prevents flex container from overflowing */
+  z-index: inherit;
 }
 
 .map-controls {
+  position: relative;
   padding: 15px;
   display: flex;
   justify-content: center;
@@ -40,6 +40,7 @@
 }
 
 .confirm-button {
+  position: relative;
   background: #4caf50;
   color: white;
   border: none;

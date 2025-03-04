@@ -5,6 +5,7 @@ from typing import List, Tuple
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
+from common.vehicle_type import VehicleType
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours

@@ -1,5 +1,7 @@
-from typing import TypedDict
-import datetime
+from typing import TypedDict, List, Dict
+from datetime import datetime
+
+from copy import deepcopy
 
 class LatLon(TypedDict):
     """
@@ -46,3 +48,9 @@ class DBRow(TypedDict):
     speed:float
     time:datetime
     location:locationClass
+
+def prepDBRows(rows:List[DBRow])->List[Dict]:
+    res = deepcopy(rows)
+    for row in res:
+        row["time"] = row["time"].isoformat()
+    return res
