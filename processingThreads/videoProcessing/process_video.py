@@ -6,7 +6,6 @@ from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
-from common.vehicle_type import VehicleType
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
@@ -21,7 +20,7 @@ def get_key(filename):
 def processVideo(id:int, vid:str):
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
-        api_key=get_key("apikey")
+        api_key=get_key("roboflow_api_key")
     )
 
     classes = ["Scooter-Rider", "bikerider"]
@@ -86,8 +85,20 @@ def processVideo(id:int, vid:str):
             tracked_id = obj.track_id
             label = obj.det_class
 
+            # VISUAL TESTING
+            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
             data.setdefault(tracked_id, [])
             data[tracked_id].append((frame_number, x, y, w, h))
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+        
+        # VISUAL TESTING
+        cv2.imshow("Test", frame)
 
         frame_number += 1
 
