@@ -2,7 +2,7 @@ from math import inf
 import cv2
 from inference_sdk import InferenceHTTPClient
 from deep_sort_realtime.deepsort_tracker import DeepSort
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
@@ -21,7 +21,7 @@ def get_key(filename):
 def processVideo(id:int, vid:str):
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
-        api_key=get_key("apikey")
+        api_key=get_key("roboflow_api_key")
     )
 
     classes = ["Scooter-Rider", "bikerider"]
