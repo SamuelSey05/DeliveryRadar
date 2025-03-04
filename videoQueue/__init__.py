@@ -1,2 +1,2 @@
-from videoQueue.api import *
+from videoQueue.api import VideoQueue
 

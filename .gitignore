@@ -1,6 +1,7 @@
 test.*
 common.zip
 **/__pycache__/**
+yolo11n.pt
 
 db_pwd
 .direnv/**
@@ -9,3 +10,5 @@ db_pwd
 .vscode
 
 **/.DS_Store
+
+yolo11n.pt
