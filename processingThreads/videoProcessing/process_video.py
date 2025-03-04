@@ -28,19 +28,19 @@ def processVideo(id:int, vid:str):
     data = {}
     reference_points = {}
     
-    # define colour of reference point (cones)
+    # Define colour of reference point (cones)
     colour = np.uint8([[[232, 0, 4]]]) # orange
     hsv_colour = cv2.cvtColor(colour, cv2.COLOR_RGB2HSV)
 
-    # define upper and lower bands for the colour range
+    # Define upper and lower bands for the colour range
     lower = np.array((hsv_colour[0][0][0] - 5, 190, 190), dtype=np.uint8)
     upper = np.array((hsv_colour[0][0][0] + 5, 255, 255), dtype=np.uint8)
 
-    # get video properties
+    # Get video properties
     capture = cv2.VideoCapture(vid)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
 
-    # define DeepSort tracker for object tracking across frames
+    # Define DeepSort tracker for object tracking across frames
     tracker = DeepSort()
 
     frame_number = 1
@@ -51,7 +51,7 @@ def processVideo(id:int, vid:str):
         if not ret:
             break
 
-        # detect objects
+        # Detect objects
 
         results = CLIENT.infer(frame, model_id="bikes-ped-scooters/4")
 
@@ -60,16 +60,16 @@ def processVideo(id:int, vid:str):
 
         for p in predictions:
             w, h = p["width"], p["height"]
-            x, y = p["x"] - w/2, p["y"] - h/2 # (x, y) are top left bounding box coords
+            x, y = p["x"] - w/2, p["y"] - h/2 # (x, y) are top left bounding box co-ords
 
             label = p['class']
             confidence = p['confidence']
 
-            # ignore pedestrians
+            # Ignore pedestrians
             if label in classes:
                 objects.append(([x, y, w, h], confidence, label))
 
-        # track objects
+        # Track objects
 
         tracked_objects = tracker.update_tracks(objects, frame=frame)
 
@@ -86,44 +86,38 @@ def processVideo(id:int, vid:str):
             tracked_id = obj.track_id
             label = obj.det_class
 
-            # UNCOMMENT FOR VISUAL TESTING
-            # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            # cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-            data[tracked_id] = data.get(tracked_id, []).append((frame_number, x, y, w, h))
-
-        # UNCOMMENT FOR VISUAL TESTING
-        # cv2.imshow("Test", frame)
+            data.setdefault(tracked_id, [])
+            data[tracked_id].append((frame_number, x, y, w, h))
 
         frame_number += 1
 
-        # detect reference points
+        # Detect reference points
 
-        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # convert image from original colour space to HSV
-        blur_frame = cv2.GaussianBlur(hsv_frame, (5,5), 0) # blur frame to reduce noise
-        mask = cv2.inRange(blur_frame, lower, upper) # create colour mask
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # Convert image from original colour space to HSV
+        blur_frame = cv2.GaussianBlur(hsv_frame, (5,5), 0) # Blur frame to reduce noise
+        mask = cv2.inRange(blur_frame, lower, upper) # Create colour mask
 
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         filtered_contours = filter_contours(contours, hierarchy)
 
-        # continue if no reference points found in frame
+        # Continue if no reference points found in frame
         if len(filtered_contours) == 0:
             continue 
 
-        # get tuple of (x,y) tuples from the filtered contours
-        # increment counter of how many times that reference location has been seen
+        # Get tuple of (x,y) tuples from the filtered contours
+        # Increment counter of how many times that reference location has been seen
         reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
-        reference_points[reference_index] = reference_points.get(reference_index, 0) + 1 
+        reference_points.setdefault(reference_index, 0)
+        reference_points[reference_index] = reference_points.get(reference_index) + 1 
 
-    # get most common reference points
+    # Get most common reference points
     observed_references = list(max(reference_points, key=reference_points.get))
 
     if len(observed_references) < 2 or len(observed_references) > 5:
         return {}
     elif len(observed_references) > 3:
-        #Only take the 3 points that are the most colinear, which will be the 3 points for the cones
+        # Only take the 3 points that are the most colinear, which will be the 3 points for the cones
         def getArea(p1, p2, p3):
             # Find area of triangle between 3 points
             return 0.5 * abs(p1[0] * (p2[1] * p3[1]) + p2[0](p3[1] - p1[1]) + p3[0](p1[1] - p2[1]))
@@ -162,7 +156,6 @@ def frames_to_speed(frames: dict[int, List[Tuple[int, float, float, float, float
 
         diffs = np.linalg.norm(midpoints[1:] - midpoints[:-1], axis=1) # Calculate shortest differences between consecutive midpoints
         binned_mean = binned_statistic(frame_numbers[1:], diffs * fps * weights, statistic='mean', bins=len(frames) // fps) # Bin data into seconds (groups of fps frames)
-        # speeds[obj_id] = binned_mean.statistic
 
         speeds[obj_id] = max(compute_speed(binned_mean.statistic, homography_matrix, reference_points=pixel_points))
 
