@@ -77,9 +77,6 @@ def processVideo(id:int, vid:str):
         reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
         reference_points[reference_index] = reference_points.get(reference_index, 0) + 1 
 
-    # os.remove(vid)
-
-
     # get most common reference points
     # TODO : pass this to another function for distance calculation
     observed_references = list(max(reference_points, key=reference_points.get))

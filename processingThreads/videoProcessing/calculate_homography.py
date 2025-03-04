@@ -78,7 +78,7 @@ def compute_homography_matrix(frame):
     return (homography_matrix, list(pixel_points[:2]))
 
 
-def compute_homography_matrix_cones(cone_midpoints: List[Tuple[float, float]], cone_spacing_meters: float=5.0) -> Optional[np.darray]:
+def compute_homography_matrix_cones(cone_midpoints: List[Tuple[float, float]], cone_spacing_meters: float=5.0) -> Optional[np.ndarray]:
     """
     Computes the homography matrix using cone midpoints as reference points.
 
