@@ -1,19 +1,48 @@
 import {useState, useEffect} from 'react';
 import "leaflet/dist/leaflet.css";
 import { LayersControl, MapContainer, TileLayer} from "react-leaflet";
+import { useMap } from "react-leaflet/hooks"
 import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapLayer";
-//import Rcslider from "rc-slider";
-import 'rc-slider/assets/index.css'
+import 'rc-slider/assets/index.css' /*imports of all necessary packages*/
 
-const HeatmapLayer = HeatmapLayerFactory();
+  
+const layersControlStyle = {position: "fixed", zIndex: "inherit"};
 
-const layersControlStyle = {position: "fixed", zIndex: "inherit"
-};
+function HeatMapComponent({data}) {
+  const HeatmapLayer = HeatmapLayerFactory();
+  
+  const [radius, setRadius] = useState(10);
 
-const centre = [52.211, 0.092];
+  const map = useMap();
 
-{/*isPortrait*/}
+  useEffect(() => {
+    const onZoomEnd = () => {
+      console.log("a");
+      setRadius(Math.max(5, 140/map.getZoom()));
+      //map.setZoom(zoom);
+    };
+
+    map.on('zoomend', onZoomEnd);
+    return () => {
+      map.off('zoomend', onZoomEnd);
+    };
+  });
+
+
+
+  return <HeatmapLayer fitBoundsOnLoad fitBoundsOnUpdate points={data} longitudeExtractor={m => m.location.lon}
+  latitudeExtractor={m => m.location.lat} intensityExtractor={m => m.speed} 
+  style = {{layersControlStyle}} blur = {5} radius = {radius} >
+  {/*The "HeatMapLayer" takes the objects requested and stored in "data", and extracts the relevant information from each object in the list. */}
+  </HeatmapLayer>;
+}
+
 function Map( ) {
+
+  const centre = [52.211, 0.092];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); /*hooks, which define various aspect of the map's state*/
 
   const mapContainerStyle = {
     position: "absolute",
@@ -23,26 +52,8 @@ function Map( ) {
     right: "10px",
     display: "block",
     zIndex: 1000,
-  };
-
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  {/*const [vehicleType, setVehicleType] = useState("all");
-
-  const [time, setTime] = useState(0);
-
-  const handleSliderChange = (t) => {
-    setTime(t);
-  }
-
-  const convertMinutesToFormatted = (minutes) => {
-    const hours = minutes/60;
-    const mins = minutes%60;
-    return String(hours) + ":" + String(mins);
-  }*/}
-
+  };/*styling of the layers and map*/
+  
   useEffect(() => {
     fetch('https://cstdeliveryradar.soc.srcf.net/heatmap-data')
       .then(response => {
@@ -60,33 +71,30 @@ function Map( ) {
         setLoading(false);
       })
 
-  }, []);
+  }, []); /* A HTTP GET request to the database, with error handling and an initial state.
+          *This handler, on a successful request, will receive a series of JSON objects,
+          * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
 
   if (loading) return <div>Data is loading, wait a sec...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) return <div>Error: {error.message}</div>; /* Returns in case of an error */
 
   return <div className="map-container">
-    <MapContainer center={ centre } zoom={20} style = { mapContainerStyle } scrollWheelZoom = {true}>
-      <LayersControl style = {layersControlStyle}>
+    <MapContainer center={ centre } zoom={15} style = { mapContainerStyle } 
+    scrollWheelZoom = {true}>
+      <LayersControl style = {layersControlStyle}> {/*These objects are imported. The map uses one layer on another. */}
         <LayersControl.BaseLayer name="Base" checked style = {layersControlStyle}>
           <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       url= "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" style = {{layersControlStyle}}>
+        {/*The "TileLayer" is the actual map - this is requested as needed from the Leaflet Server, and displayed. */}
     </TileLayer>
     </LayersControl.BaseLayer>
     <LayersControl.Overlay name="Heatmap" checked style = {layersControlStyle}>
-      <HeatmapLayer fitBoundsOnLoad fitBoundsOnUpdate points={data} longitudeExtractor={m => m.location.lon} latitudeExtractor={m => m.location.lat} intensityExtractor={m => m.speed} style = {{layersControlStyle}} blur = {5}>
-
-      </HeatmapLayer>
+      <HeatMapComponent data={data}/>
       
       
     </LayersControl.Overlay>
     </LayersControl>
   </MapContainer>
-  {/*<div style={{position: "absolute", bottom: "2%", left: "2%", right: "2%", margin: "800px", zIndex: 1000}}>
-    <p>Selected time: {convertMinutesToFormatted(time)}</p>
-  <Rcslider min={0} max={1440} step={15} value={time} onChange={handleSliderChange} 
-  style={{position: "absolute", display: "flex",  zIndex: "inherit"}}></Rcslider>
-  </div>*/}
   </div>
 }
 
