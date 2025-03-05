@@ -98,20 +98,20 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
             tracked_id = int(obj.track_id)
             label = obj.det_class
 
-            # VISUAL TESTING
-            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # # VISUAL TESTING
+            # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            # cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
             data.setdefault(tracked_id, [])
             data[tracked_id].append((frame_number, x, y, w, h))
 
-        # Break the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        # # Break the loop if 'q' is pressed
+        # if cv2.waitKey(1) & 0xFF == ord("q"):
+        #     break
         
-        # VISUAL TESTING
-        cv2.imshow("Test", frame)
+        # # VISUAL TESTING
+        # cv2.imshow("Test", frame)
 
         frame_number += 1
 
