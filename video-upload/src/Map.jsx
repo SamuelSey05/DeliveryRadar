@@ -16,6 +16,8 @@ function Map() {
   const [error, setError] =
     useState(null); /*hooks, which define various aspect of the map's state*/
 
+  const [ready, setReady] = useState(false);
+
   const [radius, setRadius] = useState(10);
 
   const mapContainerStyle = {
@@ -27,6 +29,11 @@ function Map() {
     display: "block",
     zIndex: 1000,
   }; /*styling of the layers and map*/
+
+  const handleMapReady = (map) => {
+    mapRef.current = map;
+    setReady(true);
+  };
 
   useEffect(() => {
     fetch("https://cstdeliveryradar.soc.srcf.net/heatmap-data")
@@ -48,14 +55,13 @@ function Map() {
   /* A HTTP GET request to the database, with error handling and an initial state.
    *This handler, on a successful request, will receive a series of JSON objects,
    * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
-  const map = mapRef.current;
 
   useEffect(() => {
-    if (map != null) {
-      console.log("a");
+    const map = mapRef.current;
+    console.log(ready);
+    if (false) {
       const onZoomEnd = () => {
         setRadius(Math.max(5, 140 / map.getZoom()));
-        //map.setZoom(zoom);
       };
 
       map.on("zoomend", onZoomEnd);
@@ -63,7 +69,7 @@ function Map() {
         map.off("zoomend", onZoomEnd);
       };
     }
-  });
+  }, [ready]);
 
   if (loading) return <div>Data is loading, wait a sec...</div>;
   if (error)
@@ -76,7 +82,7 @@ function Map() {
         zoom={15}
         style={mapContainerStyle}
         scrollWheelZoom={true}
-        onReady={(map) => (mapRef.current = map)}
+        whenReady={handleMapReady}
       >
         <LayersControl style={layersControlStyle}>
           {/*These objects are imported. The map uses one layer on another. */}
