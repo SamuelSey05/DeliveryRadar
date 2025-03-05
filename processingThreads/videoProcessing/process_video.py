@@ -9,6 +9,7 @@ from itertools import combinations
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
+from os import PathLike
 
 
 def get_key(filename):
@@ -18,13 +19,13 @@ def get_key(filename):
     except FileNotFoundError:
         print(f"{filename} file not found")
 
-def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
+def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
     """
     Process the provided video input
 
     Args:
         id (str): SHA256 of the submission, used as ID
-        vid (os.path): Path to the recorded video
+        vid (PathLike): Path to the recorded video
 
     Returns:
         tuple[str, Dict[int,float]]: Processing ID, dict of vehicle ID to speed
