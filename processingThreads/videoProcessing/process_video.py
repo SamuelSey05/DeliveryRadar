@@ -76,7 +76,7 @@ def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
     # Define DeepSort tracker for object tracking across frames
     tracker = DeepSort()
 
-    classes = ["Scooter-Rider", "bikerider"]
+    classes = set(["Scooter-Rider", "bikerider"])
     data = {}
     reference_points = {}
     
