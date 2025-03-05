@@ -4,14 +4,14 @@ import cv2
 from inference_sdk import InferenceHTTPClient
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict
 import numpy as np
 from scipy.stats import binned_statistic
 from itertools import combinations
 from processingThreads.videoProcessing.calculate_homography import compute_homography_matrix_cones
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
-import time
-
+from os import PathLike
 
 def get_key(filename):
     try:
@@ -20,9 +20,7 @@ def get_key(filename):
     except FileNotFoundError:
         print(f"{filename} file not found")
 
-def extract_from_video(vid:os.path, start_time):
-
-    print(f"START - extract frames: {(time.time() - start_time)}")
+def extract_from_video(vid:PathLike):
 
     extracted_frames = []
 
@@ -33,9 +31,6 @@ def extract_from_video(vid:os.path, start_time):
     while capture.isOpened():
         ret, frame = capture.read()
 
-        if (frame_number % 10 == 0):
-            print(f"    - frame {frame_number}: {(time.time() - start_time)}")
-
         if not ret:
             break
 
@@ -45,33 +40,25 @@ def extract_from_video(vid:os.path, start_time):
 
     capture.release()
 
-    print(f"FINISH - extract frames: {(time.time() - start_time)}")
-
-
     return (extracted_frames, fps)
 
 
-def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
+def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
     """
     Process the provided video input
 
     Args:
         id (str): SHA256 of the submission, used as ID
-        vid (os.path): Path to the recorded video
+        vid (PathLike): Path to the recorded video
 
     Returns:
         tuple[str, Dict[int,float]]: Processing ID, dict of vehicle ID to speed
     """
-    start_time = time.time()
-    print(f"Start: {(time.time() - start_time)}")
     
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
         api_key=get_key("roboflow_api_key")
     )
-
-    print(f"Connect to CLIENT: {(time.time() - start_time)}")
-
 
     # Define DeepSort tracker for object tracking across frames
     tracker = DeepSort()
@@ -88,19 +75,12 @@ def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
     lower = np.array((hsv_colour[0][0][0] - 5, 190, 190), dtype=np.uint8)
     upper = np.array((hsv_colour[0][0][0] + 5, 255, 255), dtype=np.uint8)
 
-    print(f"Define environment: {(time.time() - start_time)}")
-
-
     # Get video properties, including a list of frames from the video
-    extracted_frames, fps = extract_from_video(vid, start_time)
+    extracted_frames, fps = extract_from_video(vid)
 
     # Detect objects in each frame
-    print(f"START - get predictions: {(time.time() - start_time)}")
     results = CLIENT.infer(extracted_frames, model_id="bikes-ped-scooters/4")
-    print(f"FINISH - get predictions: {(time.time() - start_time)}")
 
-
-    print(f"START - process predictions: {(time.time() - start_time)}")
     frame_number = 1
     for result in results:
         frame = extracted_frames[frame_number - 1]
@@ -161,8 +141,7 @@ def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
             reference_points[reference_index] = reference_points.get(reference_index) + 1 
 
         frame_number += 1
-        
-    print(f"FINISH - process predictions: {(time.time() - start_time)}")
+
 
     # Get most common reference points
     observed_references = list(max(reference_points, key=reference_points.get))
@@ -184,6 +163,7 @@ def processVideo(id:str, vid:os.path)-> tuple[str, Dict[int,float]]:
                 min_area = area
     else: # len(observed_references) is 2 or 3, this is expected case
         cone_points = observed_references
+
 
     # Collate data and pass to another function for calculating the speed of the vehicles
     data = {obj_id: frames for obj_id, frames in data.items() if len(frames) >= fps} # Filter out detected objects that aren't in for at least 1 second
@@ -212,6 +192,3 @@ def frames_to_speed(frames: dict[int, List[Tuple[int, float, float, float, float
 
 
     return speeds # Return average speed in pixels per second for each second (group of fps frames) for each detected object
-
-def test():
-    print(processVideo(1, "processingThreads/assets/multiple_bikes/mult_bike2.mov"))
