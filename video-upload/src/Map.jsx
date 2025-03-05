@@ -1,48 +1,22 @@
-import {useState, useEffect} from 'react';
+import { useState, useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
-import { LayersControl, MapContainer, TileLayer} from "react-leaflet";
-import { useMap } from "react-leaflet/hooks"
+import { LayersControl, MapContainer, TileLayer } from "react-leaflet";
 import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapLayer";
-import 'rc-slider/assets/index.css' /*imports of all necessary packages*/
+import "rc-slider/assets/index.css"; /*imports of all necessary packages*/
 
-  
-const layersControlStyle = {position: "fixed", zIndex: "inherit"};
+const layersControlStyle = { position: "fixed", zIndex: "inherit" };
 
-function HeatMapComponent({data}) {
+function Map() {
+  const mapRef = useRef(null);
   const HeatmapLayer = HeatmapLayerFactory();
-  
-  const [radius, setRadius] = useState(10);
-
-  const map = useMap();
-
-  useEffect(() => {
-    const onZoomEnd = () => {
-      console.log("a");
-      setRadius(Math.max(5, 140/map.getZoom()));
-      //map.setZoom(zoom);
-    };
-
-    map.on('zoomend', onZoomEnd);
-    return () => {
-      map.off('zoomend', onZoomEnd);
-    };
-  });
-
-
-
-  return <HeatmapLayer fitBoundsOnLoad fitBoundsOnUpdate points={data} longitudeExtractor={m => m.location.lon}
-  latitudeExtractor={m => m.location.lat} intensityExtractor={m => m.speed} 
-  style = {{layersControlStyle}} blur = {5} radius = {radius} >
-  {/*The "HeatMapLayer" takes the objects requested and stored in "data", and extracts the relevant information from each object in the list. */}
-  </HeatmapLayer>;
-}
-
-function Map( ) {
 
   const centre = [52.211, 0.092];
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); /*hooks, which define various aspect of the map's state*/
+  const [error, setError] =
+    useState(null); /*hooks, which define various aspect of the map's state*/
+
+  const [radius, setRadius] = useState(10);
 
   const mapContainerStyle = {
     position: "absolute",
@@ -52,50 +26,97 @@ function Map( ) {
     right: "10px",
     display: "block",
     zIndex: 1000,
-  };/*styling of the layers and map*/
-  
+  }; /*styling of the layers and map*/
+
   useEffect(() => {
-    fetch('https://cstdeliveryradar.soc.srcf.net/heatmap-data')
-      .then(response => {
-        if(!response.ok) {
+    fetch("https://cstdeliveryradar.soc.srcf.net/heatmap-data")
+      .then((response) => {
+        if (!response.ok) {
           throw new Error("Heatmap data is unavailable for some reason.");
         }
         return response.json();
       })
-      .then(data => {
+      .then((data) => {
         setData(data);
         setLoading(false);
       })
-      .catch(error => {
+      .catch((error) => {
         setError(error);
         setLoading(false);
-      })
+      });
+  }, []);
+  /* A HTTP GET request to the database, with error handling and an initial state.
+   *This handler, on a successful request, will receive a series of JSON objects,
+   * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
+  const map = mapRef.current;
 
-  }, []); /* A HTTP GET request to the database, with error handling and an initial state.
-          *This handler, on a successful request, will receive a series of JSON objects,
-          * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
+  useEffect(() => {
+    if (map != null) {
+      console.log("a");
+      const onZoomEnd = () => {
+        setRadius(Math.max(5, 140 / map.getZoom()));
+        //map.setZoom(zoom);
+      };
+
+      map.on("zoomend", onZoomEnd);
+      return () => {
+        map.off("zoomend", onZoomEnd);
+      };
+    }
+  });
 
   if (loading) return <div>Data is loading, wait a sec...</div>;
-  if (error) return <div>Error: {error.message}</div>; /* Returns in case of an error */
+  if (error)
+    return <div>Error: {error.message}</div>; /* Returns in case of an error */
 
-  return <div className="map-container">
-    <MapContainer center={ centre } zoom={15} style = { mapContainerStyle } 
-    scrollWheelZoom = {true}>
-      <LayersControl style = {layersControlStyle}> {/*These objects are imported. The map uses one layer on another. */}
-        <LayersControl.BaseLayer name="Base" checked style = {layersControlStyle}>
-          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      url= "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" style = {{layersControlStyle}}>
-        {/*The "TileLayer" is the actual map - this is requested as needed from the Leaflet Server, and displayed. */}
-    </TileLayer>
-    </LayersControl.BaseLayer>
-    <LayersControl.Overlay name="Heatmap" checked style = {layersControlStyle}>
-      <HeatMapComponent data={data}/>
-      
-      
-    </LayersControl.Overlay>
-    </LayersControl>
-  </MapContainer>
-  </div>
+  return (
+    <div className="map-container">
+      <MapContainer
+        center={centre}
+        zoom={15}
+        style={mapContainerStyle}
+        scrollWheelZoom={true}
+        onReady={(map) => (mapRef.current = map)}
+      >
+        <LayersControl style={layersControlStyle}>
+          {/*These objects are imported. The map uses one layer on another. */}
+          <LayersControl.BaseLayer
+            name="Base"
+            checked
+            style={layersControlStyle}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              style={{ layersControlStyle }}
+            >
+              {/*The "TileLayer" is the actual map - this is requested as needed from the Leaflet Server, and displayed. */}
+            </TileLayer>
+          </LayersControl.BaseLayer>
+          <LayersControl.Overlay
+            name="Heatmap"
+            checked
+            style={layersControlStyle}
+          >
+            <HeatmapLayer
+              fitBoundsOnLoad
+              fitBoundsOnUpdate
+              points={data}
+              longitudeExtractor={(m) => m.location.lon}
+              latitudeExtractor={(m) => m.location.lat}
+              intensityExtractor={(m) => m.speed}
+              style={{ layersControlStyle }}
+              blur={5}
+              radius={radius}
+            >
+              {/*The "HeatMapLayer" takes the objects requested and stored in "data", 
+              and extracts the relevant information from each object in the list. */}
+            </HeatmapLayer>
+          </LayersControl.Overlay>
+        </LayersControl>
+      </MapContainer>
+    </div>
+  );
 }
 
 export default Map;

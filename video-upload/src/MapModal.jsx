@@ -1,13 +1,18 @@
-import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import './MapModal.css';
+import { useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMapEvents,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "./MapModal.css";
 
 // Fix default marker icon issue
-import markerIconPng from 'leaflet/dist/images/marker-icon.png';
-import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
-
+import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import markerShadowPng from "leaflet/dist/images/marker-shadow.png";
 
 const customMarkerIcon = new L.Icon({
   iconUrl: markerIconPng,
@@ -35,7 +40,8 @@ function LocationMarker({ position, setPosition }) {
       }}
     >
       <Popup>
-        Selected Location: <br /> {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
+        Selected Location: <br /> {position.lat.toFixed(5)},{" "}
+        {position.lng.toFixed(5)}
       </Popup>
     </Marker>
   );
@@ -48,18 +54,18 @@ function MapModal({ onConfirm, onClose }) {
     if (position) {
       onConfirm(position);
     } else {
-      alert('Please select a location first!');
+      alert("Please select a location first!");
     }
   };
 
   return (
-    <div className="map-modal-overlay" style={{zIndex: 'inherit'}}>
-      <div className="map-modal" style={{zIndex: 'inherit'}}>
-        <div className="map-container" style={{zIndex: 'inherit'}}>
+    <div className="map-modal-overlay" style={{ zIndex: "inherit" }}>
+      <div className="map-modal" style={{ zIndex: "inherit" }}>
+        <div className="map-container" style={{ zIndex: "inherit" }}>
           <MapContainer
             center={[52.205, 0.119]}
             zoom={13}
-            style={{ height: '100%', width: '100%', zIndex: 'inherit' }}
+            style={{ height: "100%", width: "100%", zIndex: "inherit" }}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

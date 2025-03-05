@@ -8,16 +8,16 @@ function UploadModal({ onClose }) {
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
-  const [selectedTime, setSelectedTime] = useState(""); 
+  const [selectedTime, setSelectedTime] = useState("");
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const [hour, minute] = selectedTime.split(":").map(Number);
-  
+
     const formData = {
       location: {
         lat: parseFloat((selectedLocation?.lat || 0.0).toFixed(6)),
@@ -35,9 +35,9 @@ function UploadModal({ onClose }) {
       },
       vehicle: vehicleType,
     };
-    
+
     //print formData in inspect -> console in web browser
-    console.log(JSON.stringify(formData, null, 2)); 
+    console.log(JSON.stringify(formData, null, 2));
 
     //create a new ZIP archive
     const zip = new JSZip();
@@ -45,10 +45,10 @@ function UploadModal({ onClose }) {
     //add the user's input data (formData) as a JSON named 'incident.json' to the ZIP archive
     zip.file("incident.json", JSON.stringify(formData, null, 2));
 
-    //extract the file extension from the uploaded video file 
+    //extract the file extension from the uploaded video file
     const videoExtension = video.name.split(".").pop();
 
-    //add file (renamed to upload) to the zip ARCHIVE, keeping the original video file extension 
+    //add file (renamed to upload) to the zip ARCHIVE, keeping the original video file extension
     zip.file(`upload.${videoExtension}`, video, { binary: true });
 
     try {
@@ -65,15 +65,14 @@ function UploadModal({ onClose }) {
         body: formDataToSend,
       });
 
-      //receive the JSON response from the server, and print to console 
-      const jsonResponse = await response.json()
-      console.log("Server response:", jsonResponse)
+      //receive the JSON response from the server, and print to console
+      const jsonResponse = await response.json();
+      console.log("Server response:", jsonResponse);
 
       //check if response indicates an error
       if (!response.ok) {
         throw new Error();
       }
-
     } catch (error) {
       console.error("Error uploading submission, please try again");
     }
@@ -92,7 +91,11 @@ function UploadModal({ onClose }) {
         <h3>Upload Video</h3>
         <form onSubmit={handleSubmit}>
           <label>Vehicle Type:</label>
-          <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} required>
+          <select
+            value={vehicleType}
+            onChange={(e) => setVehicleType(e.target.value)}
+            required
+          >
             <option value="">Select...</option>
             <option value="bike">Bicycle</option>
             <option value="scooter">E-Scooter</option>
@@ -108,7 +111,7 @@ function UploadModal({ onClose }) {
               min="1900"
               max="2100"
               required
-              style={{ width: '50px' }}
+              style={{ width: "50px" }}
             />
             <input
               type="number"
@@ -118,7 +121,7 @@ function UploadModal({ onClose }) {
               min="1"
               max="12"
               required
-              style={{ width: '40px'}}
+              style={{ width: "40px" }}
             />
             <input
               type="number"
@@ -128,17 +131,24 @@ function UploadModal({ onClose }) {
               min="1"
               max="31"
               required
-              style={{ width: '38px'}}
+              style={{ width: "38px" }}
             />
           </div>
 
           <label>Time:</label>
-          <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} required>
+          <select
+            value={selectedTime}
+            onChange={(e) => setSelectedTime(e.target.value)}
+            required
+          >
             <option value="">Select Time...</option>
             {Array.from({ length: 48 }).map((_, index) => {
               const hours = Math.floor(index / 2);
-              const minutes = index % 2 === 0 ? '00' : '30';
-              const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}`;
+              const minutes = index % 2 === 0 ? "00" : "30";
+              const formattedTime = `${String(hours).padStart(
+                2,
+                "0"
+              )}:${minutes}`;
               return (
                 <option key={formattedTime} value={formattedTime}>
                   {formattedTime}
@@ -153,9 +163,7 @@ function UploadModal({ onClose }) {
             className="location-button"
             onClick={() => setIsMapOpen(true)}
           >
-            {selectedLocation
-              ? "Location Selected" 
-              : "Select Location"}
+            {selectedLocation ? "Location Selected" : "Select Location"}
           </button>
 
           <label>Upload Video:</label>
