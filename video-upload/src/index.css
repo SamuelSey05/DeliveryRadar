@@ -11,8 +11,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
+}/*More background styling of the app*/
 a {
   font-weight: 500;
   color: #646cff;
