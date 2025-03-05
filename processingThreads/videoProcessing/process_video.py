@@ -11,13 +11,35 @@ from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
 from os import PathLike
 
-
 def get_key(filename):
     try:
         with open(filename, "r") as f:
             return f.read().strip()
     except FileNotFoundError:
         print(f"{filename} file not found")
+
+def extract_from_video(vid:PathLike):
+
+    extracted_frames = []
+
+    capture = cv2.VideoCapture(vid)
+    fps = int(capture.get(cv2.CAP_PROP_FPS))
+
+    frame_number = 1
+    while capture.isOpened():
+        ret, frame = capture.read()
+
+        if not ret:
+            break
+
+        extracted_frames.append(frame)
+
+        frame_number += 1
+
+    capture.release()
+
+    return (extracted_frames, fps)
+
 
 def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
     """
@@ -36,7 +58,10 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
         api_key=get_key("roboflow_api_key")
     )
 
-    classes = ["Scooter-Rider", "bikerider"]
+    # Define DeepSort tracker for object tracking across frames
+    tracker = DeepSort()
+
+    classes = set(["Scooter-Rider", "bikerider"])
     data = {}
     reference_points = {}
     
@@ -48,38 +73,31 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
     lower = np.array((hsv_colour[0][0][0] - 5, 190, 190), dtype=np.uint8)
     upper = np.array((hsv_colour[0][0][0] + 5, 255, 255), dtype=np.uint8)
 
-    # Get video properties
-    capture = cv2.VideoCapture(vid)
-    fps = int(capture.get(cv2.CAP_PROP_FPS))
+    # Get video properties, including a list of frames from the video
+    extracted_frames, fps = extract_from_video(vid)
 
-    # Define DeepSort tracker for object tracking across frames
-    tracker = DeepSort()
+    # Detect objects in each frame
+    results = CLIENT.infer(extracted_frames, model_id="bikes-ped-scooters/4")
 
     frame_number = 1
+    for result in results:
+        frame = extracted_frames[frame_number - 1]
+        frame_predictions = result['predictions']
 
-    while capture.isOpened():
-        ret, frame = capture.read()
-
-        if not ret:
-            break
-
-        # Detect objects
-
-        results = CLIENT.infer(frame, model_id="bikes-ped-scooters/4")
-
-        predictions = results['predictions']
         objects = []
 
-        for p in predictions:
+        for p in frame_predictions:
+            label = p['class']
+            
+            # Ignore pedestrians
+            if label not in classes:
+                continue
+
             w, h = p["width"], p["height"]
             x, y = p["x"] - w/2, p["y"] - h/2 # (x, y) are top left bounding box co-ords
-
-            label = p['class']
             confidence = p['confidence']
 
-            # Ignore pedestrians
-            if label in classes:
-                objects.append(([x, y, w, h], confidence, label))
+            objects.append(([x, y, w, h], confidence, label))
 
         # Track objects
 
@@ -98,22 +116,8 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
             tracked_id = int(obj.track_id)
             label = obj.det_class
 
-            # # VISUAL TESTING
-            # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            # cv2.putText(frame, f'ID {tracked_id} CLASS {label}', (int(x), int(y) - 10),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
             data.setdefault(tracked_id, [])
-            data[tracked_id].append((frame_number, x, y, w, h))
-
-        # # Break the loop if 'q' is pressed
-        # if cv2.waitKey(1) & 0xFF == ord("q"):
-        #     break
-        
-        # # VISUAL TESTING
-        # cv2.imshow("Test", frame)
-
-        frame_number += 1
+            data[tracked_id].append((frame_number, x, y, w, h))        
 
         # Detect reference points
 
@@ -126,14 +130,16 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
         filtered_contours = filter_contours(contours, hierarchy)
 
         # Continue if no reference points found in frame
-        if len(filtered_contours) == 0:
-            continue 
+        if len(filtered_contours) > 0:
 
-        # Get tuple of (x,y) tuples from the filtered contours
-        # Increment counter of how many times that reference location has been seen
-        reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
-        reference_points.setdefault(reference_index, 0)
-        reference_points[reference_index] = reference_points.get(reference_index) + 1 
+            # Get tuple of (x,y) tuples from the filtered contours
+            # Increment counter of how many times that reference location has been seen
+            reference_index = tuple(cv2.boundingRect(c)[:2] for c in filtered_contours) 
+            reference_points.setdefault(reference_index, 0)
+            reference_points[reference_index] = reference_points.get(reference_index) + 1 
+
+        frame_number += 1
+
 
     # Get most common reference points
     observed_references = list(max(reference_points, key=reference_points.get))
@@ -157,14 +163,13 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
         cone_points = observed_references
 
 
+    # Collate data and pass to another function for calculating the speed of the vehicles
     data = {obj_id: frames for obj_id, frames in data.items() if len(frames) >= fps} # Filter out detected objects that aren't in for at least 1 second
 
     if len(data) == 0:
         return {}
 
     homography_matrix = compute_homography_matrix_cones(cone_points)
-
-    capture.release()
 
     return (id, frames_to_speed(data, fps, homography_matrix, cone_points[:2]))
 
