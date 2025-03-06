@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
-import { LayersControl, MapContainer, TileLayer } from "react-leaflet";
+import { LayersControl, MapContainer, TileLayer, useMap } from "react-leaflet";
 import HeatmapLayerFactory from "@vgrid/react-leaflet-heatmap-layer/cjs/HeatmapLayer";
-import "rc-slider/assets/index.css"; /*imports of all necessary packages*/
+/*imports of all necessary packages*/
 
 const layersControlStyle = { position: "fixed", zIndex: "inherit" };
 
@@ -13,6 +13,9 @@ function Map() {
   const [loading, setLoading] = useState(true);
   const [error, setError] =
     useState(null); /*hooks, which define various aspect of the map's state*/
+
+  const centre = [52.205, 0.119];
+  const zoom = 13;
 
   const mapContainerStyle = {
     position: "absolute",
@@ -41,6 +44,14 @@ function Map() {
         setLoading(false);
       });
   }, []);
+
+  function MapTester() {
+    const map = useMap();
+
+    useEffect(() => {
+      map.setView(centre, zoom);
+    }, []);
+  }
   /* A HTTP GET request to the database, with error handling and an initial state.
    *This handler, on a successful request, will receive a series of JSON objects,
    * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
@@ -52,11 +63,8 @@ function Map() {
   return (
     <div className="map-container">
       <MapContainer
-        bounds={[
-          [53.205, 0.019],
-          [53.105, 0.219],
-        ]}
-        zoom={13}
+        center={centre}
+        zoom={zoom}
         style={mapContainerStyle}
         scrollWheelZoom={true}
       >
@@ -86,7 +94,7 @@ function Map() {
               points={data}
               longitudeExtractor={(m) => m.location.lon}
               latitudeExtractor={(m) => m.location.lat}
-              intensityExtractor={(m) => m.speed / 2}
+              intensityExtractor={(m) => m.speed / 3}
               style={{ layersControlStyle }}
               blur={5}
               radius={10}
@@ -96,6 +104,7 @@ function Map() {
             </HeatmapLayer>
           </LayersControl.Overlay>
         </LayersControl>
+        <MapTester />
       </MapContainer>
     </div>
   );
