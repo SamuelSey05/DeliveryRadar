@@ -60,6 +60,7 @@ function App() {
           bottom: isPortrait ? "55%" : "5%",
         }}
       >
+        <h1 className="app-title">Heat Map</h1>
         {/**This stores the heatmap, which is at the top for a portrait screen, and the right for a landscape. */}
         <Map></Map>
         {/**Displays the Heatmap component at all times */}
