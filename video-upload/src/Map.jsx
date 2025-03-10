@@ -15,7 +15,7 @@ function Map() {
     useState(null); /*hooks, which define various aspect of the map's state*/
 
   const centre = [52.205, 0.119];
-  const zoom = 13;
+  const [zoom, setZoom] = useState(13);
 
   const mapContainerStyle = {
     position: "absolute",
