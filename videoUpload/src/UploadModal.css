@@ -115,3 +115,17 @@ button {
 .location-button:hover {
   background: #45a049;
 }
+
+.info-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: white;
+}
+.info-button:hover {
+  color: #ddd;
+}

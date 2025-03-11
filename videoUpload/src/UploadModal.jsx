@@ -3,6 +3,25 @@ import MapModal from "./MapModal";
 import "./UploadModal.css";
 import JSZip from "jszip";
 
+//INFOMODAL 
+function InfoModal({ onClose }) {
+  return (
+    <div className="modal-overlay" style={{ zIndex: 1100, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+      <div className="modal" style={{ width: '100%', height: '100%', padding: '20px' }}>
+        <h3>Video Instructions</h3>
+        <p>Follow these instructions for reliable video analysis:</p>
+        <ul style={{ textAlign: 'left' }}>
+          <li>The video must not exceed 50 MB</li>
+          <li>The video must be at least 1 second long</li>
+          <li>The camera should be kept still while filming</li>
+          <li>At least 2 cones should be visible</li>
+        </ul>
+        <button className="close-button" onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
 function UploadModal({ onClose }) {
   const [vehicleType, setVehicleType] = useState("");
   const [year, setYear] = useState("");
@@ -12,6 +31,8 @@ function UploadModal({ onClose }) {
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+
+  const [isInfoOpen, setIsInfoOpen] = useState(false); //INFOMODAL
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,17 +88,22 @@ function UploadModal({ onClose }) {
 
       //receive the JSON response from the server, and print to console
       const jsonResponse = await response.json();
+
+      //remove console log before final code submission
       console.log("Server response:", jsonResponse);
 
       //check if response indicates an error
       if (!response.ok) {
         throw new Error();
       }
-    } catch (error) {
-      console.error("Error uploading submission, please try again");
-    }
 
-    onClose();
+      alert("Submission successfully uploaded!");
+    } catch (error) {
+
+      //remove console log before final code submission
+      console.error("Error uploading submission, please try again");
+      alert("Upload failed - please try again");
+    }
   };
 
   const handleLocationConfirm = (location) => {
@@ -85,9 +111,48 @@ function UploadModal({ onClose }) {
     setIsMapOpen(false);
   };
 
+  const months = [
+    { name: "January", value: "1", days: 31 },
+    { name: "February", value: "2", days: 28 },
+    { name: "March", value: "3", days: 31 },
+    { name: "April", value: "4", days: 30 },
+    { name: "May", value: "5", days: 31 },
+    { name: "June", value: "6", days: 30 },
+    { name: "July", value: "7", days: 31 },
+    { name: "August", value: "8", days: 31 },
+    { name: "September", value: "9", days: 30 },
+    { name: "October", value: "10", days: 31 },
+    { name: "November", value: "11", days: 30 },
+    { name: "December", value: "12", days: 31 },
+  ];
+
+  const getDaysInMonth = () => {
+    const selectedMonth = months.find((m) => m.value === month);
+    if (selectedMonth) {
+      return selectedMonth.days;
+    }
+    return 31;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        alert("File size exceeds size limit - please select a smaller file.");
+        e.target.value = ""; // Reset the input field
+        setVideo(null);
+      } else {
+        setVideo(file);
+      }
+    }
+  };
+
   return (
     <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div className="modal" style={{ zIndex: "inherit" }}>
+        
+        <button className="info-button" onClick={() => setIsInfoOpen(true)}>ℹ️</button> 
+        
         <h3>Upload Video</h3>
         <form onSubmit={handleSubmit}>
           <label>Vehicle Type:</label>
@@ -103,36 +168,23 @@ function UploadModal({ onClose }) {
 
           <label>Date:</label>
           <div className="date-inputs">
-            <input
-              type="number"
-              placeholder="YYYY"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              min="1900"
-              max="2100"
-              required
-              style={{ width: "50px" }}
-            />
-            <input
-              type="number"
-              placeholder="MM"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              min="1"
-              max="12"
-              required
-              style={{ width: "40px" }}
-            />
-            <input
-              type="number"
-              placeholder="DD"
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              min="1"
-              max="31"
-              required
-              style={{ width: "38px" }}
-            />
+            <select value={year} onChange={(e) => setYear(e.target.value)} required>
+              {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            
+            <select value={month} onChange={(e) => setMonth(e.target.value)} required>
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>{m.name}</option>
+              ))}
+            </select>
+
+            <select value={day} onChange={(e) => setDay(e.target.value)} required>
+              {[...Array(getDaysInMonth()).keys()].map((d) => (
+                <option key={d + 1} value={d + 1}>{d + 1}</option>
+              ))}
+            </select>
           </div>
 
           <label>Time:</label>
@@ -170,7 +222,7 @@ function UploadModal({ onClose }) {
           <input
             type="file"
             accept="video/*"
-            onChange={(e) => setVideo(e.target.files[0])}
+            onChange={handleFileChange}
             required
           />
 
@@ -191,6 +243,9 @@ function UploadModal({ onClose }) {
           />
         )}
       </div>
+
+      {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
+
     </div>
   );
 }
