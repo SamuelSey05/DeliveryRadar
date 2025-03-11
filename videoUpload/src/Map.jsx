@@ -15,7 +15,7 @@ function Map() {
     useState(null); /*hooks, which define various aspect of the map's state*/
 
   const centre = [52.205, 0.119];
-  const [zoom, setZoom] = useState(13);
+  const zoom = useState(13)[0];
 
   const mapContainerStyle = {
     position: "absolute",
@@ -44,17 +44,17 @@ function Map() {
         setLoading(false);
       });
   }, []);
+  /* A HTTP GET request to the database, with error handling and an initial state.
+   *This handler, on a successful request, will receive a series of JSON objects,
+   * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
 
   function MapTester() {
     const map = useMap();
 
     useEffect(() => {
       map.setView(centre, zoom);
-    }, []);
+    }, []); //Keeps the map's focus on Cambridge
   }
-  /* A HTTP GET request to the database, with error handling and an initial state.
-   *This handler, on a successful request, will receive a series of JSON objects,
-   * convert them to JavaScript without a call to JSON.parse, and store them in the list "data" */
 
   if (loading) return <div>Data is loading, wait a sec...</div>;
   if (error)
