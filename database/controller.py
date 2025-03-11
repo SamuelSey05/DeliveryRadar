@@ -106,7 +106,7 @@ class DBController:
             err()
         elif self.connection == None:
             try:
-                self.connection = connector.connect(DatabaseSecrets.host, DatabaseSecrets.user, DatabaseSecrets.password, DatabaseSecrets.database)
+                self.connection = connector.connect(host=DatabaseSecrets.host, user=DatabaseSecrets.user, password=DatabaseSecrets.password, database=DatabaseSecrets.database)
             except:
                 err()
                 raise DBConnectionFailure()
