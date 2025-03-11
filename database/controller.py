@@ -8,6 +8,7 @@ from sys import stderr
 import traceback
 from json import dumps, loads
 from common import DBConnectionFailure
+from config import DatabaseSecrets
 
 LOCAL_TEST = (env("DR_FLASK_LOCAL_TEST")!=None)
  
@@ -105,12 +106,7 @@ class DBController:
             err()
         elif self.connection == None:
             try:
-                con = lambda pwd: connector.connect(host="mysql.internal.srcf.net", user="cstdeliveryradar", password=pwd, database="cstdeliveryradar")
-                if os.path.isfile(os.path.abspath("db_pwd")):
-                    with open(os.path.abspath("db_pwd"), "r") as f:
-                        self.connection = con(f.read())
-                else:
-                    self.connection = con(env("DELIVERYRADAR_DB_PWD"))
+                self.connection = connector.connect(DatabaseSecrets.host, DatabaseSecrets.user, DatabaseSecrets.password, DatabaseSecrets.user)
             except:
                 err()
                 raise DBConnectionFailure()

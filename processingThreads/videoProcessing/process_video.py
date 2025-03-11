@@ -10,13 +10,7 @@ from processingThreads.videoProcessing.calculate_homography import compute_homog
 from processingThreads.videoProcessing.calculate_speed import compute_speed
 from processingThreads.videoProcessing.filter_contours import filter_contours
 from os import PathLike
-
-def get_key(filename):
-    try:
-        with open(filename, "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        print(f"{filename} file not found")
+from config import roboflow_key
 
 def extract_from_video(vid:PathLike):
 
@@ -55,7 +49,7 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
     
     CLIENT = InferenceHTTPClient(
         api_url="https://detect.roboflow.com",
-        api_key=get_key("roboflow_api_key")
+        api_key=roboflow_key
     )
 
     # Define DeepSort tracker for object tracking across frames
