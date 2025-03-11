@@ -24,13 +24,18 @@ function InfoModal({ onClose }) {
 
 function UploadModal({ onClose }) {
   const [vehicleType, setVehicleType] = useState("");
-  const [year, setYear] = useState("");
-  const [month, setMonth] = useState("");
-  const [day, setDay] = useState("");
+  //const [year, setYear] = useState("");
+  //const [month, setMonth] = useState("");
+  //const [day, setDay] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [video, setVideo] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState((today.getMonth() + 1).toString());
+  const [day, setDay] = useState(today.getDate().toString());
 
   const [isInfoOpen, setIsInfoOpen] = useState(false); //INFOMODAL
 
