@@ -144,7 +144,7 @@ def processVideo(id:str, vid:PathLike)-> tuple[str, Dict[int,float]]:
         # Only take the 3 points that are the most colinear, which will be the 3 points for the cones
         def getArea(p1, p2, p3):
             # Find area of triangle between 3 points
-            return 0.5 * abs(p1[0] * (p2[1] * p3[1]) + p2[0](p3[1] - p1[1]) + p3[0](p1[1] - p2[1]))
+            return 0.5 * abs(p1[0] * (p2[1] * p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1]))
         
         min_area = inf
         cone_points = []
