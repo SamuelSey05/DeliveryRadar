@@ -13,6 +13,7 @@ db_pwd
 .vscode
 
 roboflow_api_key
+config.py
 *.pyc
 *.pt
 
