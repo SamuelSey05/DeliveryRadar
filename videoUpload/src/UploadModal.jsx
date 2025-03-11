@@ -58,7 +58,7 @@ function UploadModal({ onClose }) {
     };
 
     //print formData in inspect -> console in web browser
-    console.log(JSON.stringify(formData, null, 2));
+    //console.log(JSON.stringify(formData, null, 2));
 
     //create a new ZIP archive
     const zip = new JSZip();
@@ -90,7 +90,7 @@ function UploadModal({ onClose }) {
       const jsonResponse = await response.json();
 
       //remove console log before final code submission
-      console.log("Server response:", jsonResponse);
+      //console.log("Server response:", jsonResponse);
 
       //check if response indicates an error
       if (!response.ok) {
@@ -101,7 +101,7 @@ function UploadModal({ onClose }) {
     } catch (error) {
 
       //remove console log before final code submission
-      console.error("Error uploading submission, please try again");
+      //console.error("Error uploading submission, please try again");
       alert("Upload failed - please try again");
     }
   };
