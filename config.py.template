@@ -1,0 +1,7 @@
+class DatabaseSecrets:
+    host = ""
+    user = ""
+    database = ""
+    password = ""
+
+roboflow_key = ""

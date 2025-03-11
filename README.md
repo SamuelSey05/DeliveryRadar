@@ -26,7 +26,7 @@ cd $HOME/app/DeliveryRadar
 ./build.sh
 ```
 
-To run the application for testing, setup secrets (see `secrets.py` below), then run the command `flask run` from the project root. This will open up a server listening on [localhost:5000](https://localhost:5000).
+To run the application for testing, setup secrets (see [#Secrets](#secrets) below), then run the command `flask run` from the project root. This will open up a server listening on [localhost:5000](https://localhost:5000).
 
 ### Deployment
 
@@ -286,9 +286,35 @@ systemctl --user start update.timer
 
 ### Options and Environment Variables
 
-#### `secrets.py`
+#### `config.py`
 
-<!-- TODO - actually have a secrets.py -->
+`config.py` is the file used to manage secrets for the application. To set these up, perform the following:
+
+```Bash
+cp config.py.template config.py
+$EDITOR config.py
+```
+
+This will open up the file in your preferred `$EDITOR` application. You should see the following:
+
+```Python
+class DatabaseSecrets:
+    host = ""
+    user = ""
+    database = ""
+    password = ""
+
+roboflow_key = ""
+```
+
+Fill in the details of your Database:
+
+- hostname
+- database name
+- username
+- password
+
+Also fill in your [roboflow](https://roboflow.com/) API key. 
 
 #### `DR_FLASK_LOCAL_TEST`
 
@@ -304,6 +330,14 @@ The video processing takes a long time. To test the rest of the application and 
 
 ```Bash
 export DR_TEST_SCHED=1
+```
+
+#### `DR_DB_REMOTE_TEST`
+
+The Database contains a flag to mark data submitted as test data. Set the `DR_DB_REMOTE_TEST` environment variable to mark data submitted by this instance of the application as test data.
+
+```Bash
+export DR_DB_REMOTE_TEST=1
 ```
 
 ## Dependencies
@@ -329,7 +363,6 @@ The application is written mostly in Python, aimed at version 3.11, and uses the
   
 To install these packages, perform the following command from the root directory:
 
-<!-- TODO: Update requirements.txt - Depends on having a working flake -->
 ```bash
 pip install -r requirements.txt
 ```
@@ -341,10 +374,78 @@ cd videoUpload
 npm install
 ```
 
+The object recognition section of the video processing uses [roboflow](https://roboflow.com/). In particular, a pre-trained custom [Bikes-Peds-Scooters-v4 Model](https://universe.roboflow.com/engs-89/bikes-ped-scooters/model/4). You'll need to setup a free API key to access the model, and add this to `config.py`.
+
 ## Database
 
-<!-- TODO -->
+The database used has a single table: `Incidents`, which has six columns:
+
+- `vehicle_id` - an auto incrementing integer used as a primary key - assume that all vehicles recorded are different
+- `hash` - a 32-Byte field containing the sha256 of the video submission
+- `speed` - the speed of the vehicle in the incident
+- `isTest` - if the data submitted is to be flagged as a test for ease of deletion later
+- `time` - the Date and Time of the incident
+- `location` - the location of the incident - stored as a JSON of latitude and longitude
+
+To create the required structure, perform the following when connected to the database:
+
+```SQL
+-- phpMyAdmin SQL Dump
+-- version 4.9.5deb2
+-- https://www.phpmyadmin.net/
+--
+-- Host: mysql.internal.srcf.net:3306
+-- Generation Time: Mar 11, 2025 at 02:46 PM
+-- Server version: 8.0.41-0ubuntu0.20.04.1
+-- PHP Version: 7.4.3-4ubuntu2.28
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `cstdeliveryradar`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `Incidents`
+--
+CREATE TABLE `Incidents` (
+  `vehicle_id` int NOT NULL,
+  `hash` binary(64) NOT NULL,
+  `speed` float NOT NULL,
+  `isTest` tinyint(1) NOT NULL DEFAULT '0',
+  `time` datetime NOT NULL,
+  `location` json NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+--
+-- Indexes for table `Incidents`
+--
+ALTER TABLE `Incidents`
+  ADD PRIMARY KEY (`vehicle_id`) USING BTREE,
+  ADD KEY `hash` (`hash`);
+
+--
+-- AUTO_INCREMENT for table `Incidents`
+--
+ALTER TABLE `Incidents`
+  MODIFY `vehicle_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+```
 
 ## Secrets
 
-<!-- TODO -->
+The application requires several configuration settings to be able to run. To setup your own, follow the guide given in [`config.py`](#configpy).
