@@ -16,6 +16,8 @@ class VideoQueue:
         Args:
             ctrl (Queue): Control Connection - used for Thread Controls - e.g Kill Signal
             man (Type[Manager]): Global Manager used for creating shared-memory Queues
+            vq_sem (Semaphore): Semaphore for signalling the Video Queue Thread
+            proc_sem (Semaphore): Semaphore for signalling the Processing Controller Thread
         """
         command_q = man.Queue()
         ret_q = man.Queue()
@@ -34,6 +36,7 @@ class VideoQueue:
 
         Args:
             loc (PathLike): the location of the .zip file containing the video and `incident.json`
+            debug (bool): Activate debug printing of stages. Defaults to `False`
         
         Raises:
             FileNotFoundError: Submission zip not found
@@ -77,7 +80,7 @@ class VideoQueue:
         Remove the front submission from the queue into target directory, returning ID of item
 
         Args:
-            dir (PathLike): Target directory to copy submission removed
+            target_dir (PathLike): Target directory to copy submission removed
             
         Raises:
             CannotMoveZip: OS was unable to move the zip to the given directory
