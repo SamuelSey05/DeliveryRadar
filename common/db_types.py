@@ -31,9 +31,6 @@ class W3W(TypedDict):
 ## Set LatLon as the currently in use Location Object Type
 locationClass = LatLon
 
-## Use while testing to mark data entered into the database as Test Data - allows for easy filtering later
-test_data = True
-
 class DBRow(TypedDict):
     """
     Type Specification for Data returned from the Database

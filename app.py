@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, Request, request, url_for, render_template, json
+from flask import Flask, Request, request, url_for, render_template, json, send_file
 
 ## from secrets import SECRET_KEY # TODO: Build Secrets
 from videoQueue import VideoQueue
@@ -9,6 +9,7 @@ from common import TempDir, prepDBRows, DBConnectionFailure, SIG_END
 from database import getIncidents
 
 import os
+from os.path import abspath
 from multiprocessing import Manager, Queue
 from multiprocessing.managers import SyncManager
 from signal import signal, SIGINT
@@ -79,6 +80,10 @@ def heatmap_data():
     response = app.response_class(response=json.dumps(prepDBRows(data)), status=200, mimetype='application/json')
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+@app.route("/favicon.ico", methods = ["GET"])
+def favicon():
+    return send_file(path_or_file="videoUpload/dist/assets/favicon.ico", download_name="favicon.ico")
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

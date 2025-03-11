@@ -11,6 +11,7 @@ from common import DBConnectionFailure
 from config import DatabaseSecrets
 
 LOCAL_TEST = (env("DR_FLASK_LOCAL_TEST")!=None)
+REMOTE_TEST = (env("DR_DB_REMOTE_TEST")!=None)
  
 def dump_time(time:datetime)->str:
     """
@@ -63,7 +64,7 @@ def prepare_insert(id:str, speeds:List[float], time:datetime, location:locationC
     """    
     res = ""
     for speed in speeds:
-        res += f"('{id}', '{speed}', '{dump_time(time)}', '{dump_location(location)}', '{int(test_data)}'),"
+        res += f"('{id}', '{speed}', '{dump_time(time)}', '{dump_location(location)}', '{int(REMOTE_TEST)}'),"
     return res.removesuffix(",")
             
 class DBController:
