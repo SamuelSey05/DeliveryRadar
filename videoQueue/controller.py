@@ -17,6 +17,7 @@ class _VideoQueueBase():
             in_q (Connection, optional): Input Connection for multithreading. Defaults to None.
             out_q (Connection, optional): Output Connection for multithreading. Defaults to None.
             control_con (Connection, optional): Control Connection. Defaults to None.
+            sem (Semaphore): Semaphore for signalling thread when running in multithreaded mode. Defaults to None.
         """      
         self.active = True  
         self.q = Queue()
@@ -149,6 +150,12 @@ class _VideoQueueBase():
             
         
 def test_enqueue(q=_VideoQueueBase()):
+    """
+    Test the Enqueing of a submission to the video queue
+
+    Args:
+        q (_VideoQueueBase, optional): _description_. Defaults to _VideoQueueBase().
+    """    
     from common import locationClass
     from json import dumps
     with ZipFile("test.zip", "w") as f:
@@ -158,6 +165,9 @@ def test_enqueue(q=_VideoQueueBase()):
     q.enqueue(abspath("test.zip"))
         
 def test_dequeue():
+    """
+    Test the dequeuing of items from the queue
+    """    
     q = _VideoQueueBase()
     test_enqueue(q)
     with TempDir() as temp:
@@ -173,6 +183,7 @@ def videoQueueThreadFun(in_q:Queue, out_q:Queue, ctrl_q:Queue, sem:Semaphore):
         in_q (Queue): Input Connection - for recieving commands
         out_q (Queue): Output Connection - for returning values/errors
         ctrl_q (Queue): Control Connection
+        sem (Semaphore): Semaphore for signalling the Thread
     """    
     q = _VideoQueueBase(in_q, out_q, ctrl_q, sem)
     q.monitor()

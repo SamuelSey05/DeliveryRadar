@@ -25,6 +25,14 @@ class Thread(TypedDict):
 
 class ProcessingController():
     def __init__(self, ctrl:Queue, vq:VideoQueue, sem:Semaphore):
+        """
+        Create a new Processing Controller
+
+        Args:
+            ctrl (Queue): Queue for control signals
+            vq (VideoQueue): Connection to Video Queue Thread
+            sem (Semaphore): Semaphore for signalling tasks
+        """        
         self.thr_man = Manager()
         self.ctrl_con = ctrl
         self.active = True # Used for GC
@@ -130,6 +138,9 @@ def setup_controller(control_con:Queue, vq:VideoQueue, sem:Semaphore)->Process:
     return p
     
 def test_sched():
+    """
+    Test the Scheduler
+    """    
     from time import sleep
     from common import zipspec
     from zipfile import ZipFile
