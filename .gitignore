@@ -6,13 +6,11 @@ common.zip
 **/__pycache__/**
 yolo11n.pt
 
-db_pwd
 .direnv/**
 .venv/**
 .venv
 .vscode
 
-roboflow_api_key
 config.py
 *.pyc
 *.pt
