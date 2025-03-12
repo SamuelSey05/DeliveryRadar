@@ -5,38 +5,33 @@
 
   outputs = { self, nixpkgs }:
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      fhs = pkgs.buildFHSEnv {
-        name = "fhs-shell";
-        targetPkgs = pkgs: with pkgs; [ 
-          gcc 
-          libtool 
-          nodejs_18 
-          libGL
-          glibc
-          glib
-          (pkgs.python311.withPackages(ps: with ps; [
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
+        pkgs = import nixpkgs { inherit system; };
+      });
+    in {
+      devShells = forEachSupportedSystem ({ pkgs }: {
+        default = pkgs.mkShell{
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
+            stdenv
+            stdenv.cc.cc.lib
+            glib
+            libGL
+          ]);
+          venvDir = ".venv";
+          packages = (with pkgs; [
+            python311
+            nodejs_18
+          ]) ++ (with pkgs.python311Packages; [
             pip
-            setuptools
             venvShellHook
-          ]))
-        ];
-        runScript = 
-        ''
-        $(if [ ! -d .venv ]; then 
-          python -m venv .venv 
-          source .venv/bin/activate 
-          pip install -r requirements.txt
-          bash 
-        else 
-          source .venv/bin/activate
-          bash
-        fi)
-        '';
-      };
-    in
-      {
-        devShells.${system}.default = fhs.env;
-      };
+            setuptools
+          ]);
+
+          # Set Environment Variables for app
+          DR_FLASK_LOCAL_TEST=1;
+          TMPDIR="/tmp";
+        };
+      });
+    };
 }
