@@ -16,3 +16,5 @@ config.py
 *.pt
 
 **/.DS_Store
+
+Juliet-DeliveryRadar.tar.gz
